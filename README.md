@@ -27,3 +27,7 @@ Now every time you press that key, it should emulate clicking this button
 
 ### Features for v0.6
 - [ ] extension page with ability to add/delete/modify shortcuts
+
+
+## Ideas to implement
+- simualting onClick, it should be useful for sites like youtube, when you want to create shortcut to give a like
