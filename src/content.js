@@ -52,9 +52,6 @@ function goToHref(h){
 }
 
 async function readShortcut(e) {
-  
-  // zamiast "shortcut" powinno byc cos w tylu adresu strony aktualnej
-  // sprawdzaj, czy e.key matchuje z elemetem [0] z zapisu
 
   const temp = await readLocalStorage('shortcut')
 
