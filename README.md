@@ -15,7 +15,7 @@ Now every time you press that key, it should emulate clicking this button
 - [ ] activate shortcuts based on current page
 - [ ] on/off function
 
-### Features 0.3
+### Features v0.3
 - [ ] shortcuts consisting of more then 1 key (like "shift+L")
 - [ ] deleting shortcuts
 
