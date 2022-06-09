@@ -15,7 +15,7 @@ Now every time you press that key, it should emulate clicking this button
 - [ ] activate shortcuts based on current page
 - [ ] on/off function
 
-### Features v0.3
+### Features for v0.3
 - [ ] shortcuts consisting of more then 1 key (like "shift+L")
 - [ ] deleting shortcuts
 
@@ -30,4 +30,4 @@ Now every time you press that key, it should emulate clicking this button
 
 
 ## Ideas to implement
-- simualting onClick, it should be useful for sites like youtube, when you want to create shortcut to give a like
+- simulating onClick, it should be useful for sites like youtube, when you want to create shortcut to dor example give a like
