@@ -1,7 +1,8 @@
 # shortcut-everything
+### Current version: v0.1
 A chrome extension that allows you to create create shortcut and improve yout workflow!
 
-## Current version: v0.1
+
 
 ### How to use
 Click extension icon in your browser, then "add new shortcut", insert your keyboard shortcut (only 1 key for now), click something you want to be 'shortcutted'.
