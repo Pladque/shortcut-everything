@@ -1,5 +1,5 @@
 # shortcut-everything
-A chrome extension that allows you to create create custom shortcut and improve yout workflow!
+A chrome extension that allows you to create create shortcut and improve yout workflow!
 
 Current version: v0.1
 
