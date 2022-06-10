@@ -13,10 +13,7 @@
       "default_title": "Bear",
       "default_popup": "popup.html"
     },
-    "background": {
-      "service_worker": "./test.js",
-      "type": "module"
-    },
+
     "permissions": ["tabs", "storage"]
 
     
