@@ -58,7 +58,6 @@ function goToHref(h){
 async function readShortcut(e) {
   const site = getSiteUrlIdentifier();
   const avalibleShortcuts = await readLocalStorage(site)
-
   for(let i =0; i<avalibleShortcuts.length; i++){
     if (e.key === avalibleShortcuts[i][0]){
       return avalibleShortcuts[i][1]
@@ -95,7 +94,7 @@ async function getButtonInfo(e){
 }
 
 function getShortcut(e){
-  return e.key;
+  return e.key.toLowerCase();
 }
 
 function getURL(){
@@ -121,7 +120,7 @@ function getSiteUrlIdentifier(){
 
 
 // event listener && handler
-chrome.runtime.onMessage.addListener(function(request){
+chrome.runtime.onMessage.addListener(async function(request){
   if(request === "on_off"){
 
     chrome.storage.local.clear(function() {
@@ -131,7 +130,6 @@ chrome.runtime.onMessage.addListener(function(request){
       }
       alert("storage cleared")
   });
-
   }
   else if(request==="new_shortcut")
   {
@@ -204,7 +202,61 @@ chrome.runtime.onMessage.addListener(function(request){
       }
       , true)
     });
+  } else if(request.length >=2 && request.substr(0, 7) === "Delete_"){
+
+    // alert("deleting shortcut: " + request.substr(7, request.length - 1))
+
+    const site = getSiteUrlIdentifier();
+    const shortcutToDelete = request.substr(7, request.length - 1).toLowerCase();
+
+    let presentShortcuts = null
+    try {
+      presentShortcuts = await readLocalStorage(site)
+    } catch (error) {
+      
+    }
+
+    if(presentShortcuts === null){
+      alert("not found aby shortcuts for this site: " + site)
+      return
+    }
+
+    // searching for shortcut to either override it or add as a new one
+    let overridingShourtcutIndex = -1;
+    for(let i =0; i< presentShortcuts.length; i++){
+      if(presentShortcuts[i][0] === shortcutToDelete){
+        overridingShourtcutIndex = i;
+        break;
+      }
+    }
+
+    let shortcutInfo = [0,0,0]
+    if(overridingShourtcutIndex === -1){  // not found shortcut
+      alert("not found shortcut: " +  request.substr(7, request.length - 1) + ". Nothing deleted")
+      return
+    }else{  // override shortcut
+      shortcutInfo = presentShortcuts[overridingShourtcutIndex] 
+      presentShortcuts.splice(overridingShourtcutIndex, 1);
+    }
+
+
+    let dynamicRecord = {}
+    dynamicRecord[site] = presentShortcuts
+    const constRecord = dynamicRecord;
+
+    // save shortcut on new website
+    await chrome.storage.local.set(constRecord, () => {
+      if (chrome.runtime.lastError) {
+          console.error(chrome.runtime.lastError.message);
+      }
+    });
+
+    alert("deleted " + request.substr(7, request.length - 1) + shortcutInfo[2])
   }
+  else{
+    alert("UNKNOWN REQUEST: " + request)
+  }
+  
 })
 
 document.addEventListener('keydown', async (e) => {
