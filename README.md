@@ -13,11 +13,11 @@ Now every time you press that key, it should emulate clicking this button
 
 ### Features for v0.2
 - [X] activate shortcuts based on current page
-- [ ] on/off function
+- [X] on/off function
 
 ### Features for v0.3
 - [ ] shortcuts consisting of more then 1 key (like "shift+L")
-- [ ] deleting shortcuts
+- [X] deleting shortcuts
 
 ### Features for v0.4
 - [ ] searching for link in parents
