@@ -12,7 +12,7 @@ Now every time you press that key, it should emulate clicking this button
 ## Incomming features:
 
 ### Features for v0.2
-- [ ] activate shortcuts based on current page
+- [X] activate shortcuts based on current page
 - [ ] on/off function
 
 ### Features for v0.3
