@@ -20,10 +20,10 @@ Now every time you press that key, it should emulate clicking this button
 - [ ] deleting shortcuts
 
 ### Features for v0.4
-- [ ] feedback while inserting shortcut
+- [ ] searching for link in parents
 
 ### Features for v0.5
-- [ ] searching for link in parents
+- [ ] feedback while inserting shortcut
 
 ### Features for v0.6
 - [ ] extension page with ability to add/delete/modify shortcuts
