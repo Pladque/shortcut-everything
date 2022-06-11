@@ -63,8 +63,8 @@ async function readShortcut(e) {
   const site = getSiteUrlIdentifier();
   const avalibleShortcuts = await readLocalStorage(site)
   for(let i =0; i<avalibleShortcuts.length; i++){
-    if (e.key === avalibleShortcuts[i][0]){
-      return avalibleShortcuts[i][1]
+    if (e.key === avalibleShortcuts[i]["shortcut"]){
+      return avalibleShortcuts[i]["attributes"]
     }
   }
 
@@ -159,12 +159,12 @@ chrome.runtime.onMessage.addListener(async function(request){
         }
 
         const description = "No description provided"
-        const infoArray = [shortcut, elementProperties, description]
+        const shortcutInfoObj = {"shortcut": shortcut, "attributes": elementProperties, "desc": description}
 
 
         if(presentShortcuts === null){
           let dynamicRecord = {}
-          dynamicRecord[site] = [ infoArray ]
+          dynamicRecord[site] = [ shortcutInfoObj ]
           const constRecord = dynamicRecord
 
           // save shortcuton new website
@@ -179,7 +179,7 @@ chrome.runtime.onMessage.addListener(async function(request){
             // searching for shortcut to either override it or add as a new one
             let overridingShourtcutIndex = -1;
             for(let i =0; i< presentShortcuts.length; i++){
-              if(presentShortcuts[i][0] === shortcut){
+              if(presentShortcuts[i]["shortcut"] === shortcut){
                 overridingShourtcutIndex = i;
                 break;
               }
@@ -187,9 +187,9 @@ chrome.runtime.onMessage.addListener(async function(request){
 
             
             if(overridingShourtcutIndex === -1){  // add new shortcut
-              presentShortcuts.push(infoArray) 
+              presentShortcuts.push(shortcutInfoObj) 
             }else{  // override shortcut
-              presentShortcuts[overridingShourtcutIndex] = infoArray
+              presentShortcuts[overridingShourtcutIndex] = shortcutInfoObj
             }
 
 
@@ -232,13 +232,13 @@ chrome.runtime.onMessage.addListener(async function(request){
     // searching for shortcut to either override it or add as a new one
     let overridingShourtcutIndex = -1;
     for(let i =0; i< presentShortcuts.length; i++){
-      if(presentShortcuts[i][0] === shortcutToDelete){
+      if(presentShortcuts[i]["shortcut"] === shortcutToDelete){
         overridingShourtcutIndex = i;
         break;
       }
     }
 
-    let shortcutInfo = [0,0,0]
+    let shortcutInfo = {}
     if(overridingShourtcutIndex === -1){  // not found shortcut
       alert("not found shortcut: " +  request.substr(7, request.length - 1) + ". Nothing deleted")
       return
@@ -259,7 +259,7 @@ chrome.runtime.onMessage.addListener(async function(request){
       }
     });
 
-    alert("deleted " + request.substr(7, request.length - 1) + shortcutInfo[2])
+    alert("deleted " + request.substr(7, request.length - 1) +" "+ shortcutInfo["desc"])
   }else if (request ==='RESET_FULL'){
 
     chrome.storage.local.clear(function() {
@@ -292,3 +292,6 @@ document.addEventListener('keydown', async (e) => {
 
   }
 });
+
+
+// split [site] into data: X and sth like site_data: Y
