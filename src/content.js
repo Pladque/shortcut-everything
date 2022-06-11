@@ -1,4 +1,8 @@
 var READ_ACTIVE = true;
+var isOnGlobal = true
+// Rework this script:
+//    change requests to varaibles, make function from looking for element in memory etc
+  
 
 const readLocalStorage = async (key) => {
     return new Promise((resolve, reject) => {
@@ -121,17 +125,21 @@ function getSiteUrlIdentifier(){
 
 // event listener && handler
 chrome.runtime.onMessage.addListener(async function(request){
-  if(request === "on_off"){
-
-    chrome.storage.local.clear(function() {
-      var error = chrome.runtime.lastError;
-      if (error) {
-          console.error(error);
-      }
-      alert("storage cleared")
-  });
+  if(request === "onOff_global"){
+    isOnGlobal = !isOnGlobal
+    alert("extension is on: " + isOnGlobal)
+    return
+  }else if(request === 'onOff_local'){
+    alert("localc on/off ")
+    return
   }
-  else if(request==="new_shortcut")
+
+
+  if(!isOnGlobal){
+    return
+  }
+  
+  if(request==="new_shortcut")
   {
     READ_ACTIVE = false;
     document.addEventListener('keydown', async (e) =>{
@@ -252,6 +260,16 @@ chrome.runtime.onMessage.addListener(async function(request){
     });
 
     alert("deleted " + request.substr(7, request.length - 1) + shortcutInfo[2])
+  }else if (request ==='RESET_FULL'){
+
+    chrome.storage.local.clear(function() {
+      var error = chrome.runtime.lastError;
+      if (error) {
+          console.error(error);
+      }
+      alert("storage cleared")
+    });
+
   }
   else{
     alert("UNKNOWN REQUEST: " + request)
@@ -260,6 +278,10 @@ chrome.runtime.onMessage.addListener(async function(request){
 })
 
 document.addEventListener('keydown', async (e) => {
+  if(!isOnGlobal){
+    return
+  }
+
   if(READ_ACTIVE){
     const savedShortCut = await readShortcut(e)
     if(savedShortCut){
