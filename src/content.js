@@ -81,9 +81,14 @@ function parseURL(url){
     return parsed
 }
 
-function isExtensionEnabled(){
-  let isEnabledOnCurrentSite = true;
-  return isEnabledGlobal && isEnabledOnCurrentSite
+async function isExtensionEnabled(){
+  
+  const site = getSiteUrlIdentifier();
+  let siteData = await readLocalStorage(site)
+  
+  const isEnabledOnCurrentSite = siteData.info.enabled;
+
+  return isEnabledGlobal && isEnabledOnCurrentSite;
 }
 
 //// GETs //////// GETs //////// GETs //////// GETs //////// GETs //////// GETs //////// GETs ////
@@ -178,12 +183,22 @@ async function getButtonInfo(e){
 
 function onOffGlobal(){
   isEnabledGlobal = !isEnabledGlobal
-    alert("extension is on: " + isEnabledGlobal)
+  alert("extension is on: " + isEnabledGlobal)
 }
 
 
-function onOffLocal(){
-  alert("localc on/off ")
+async function onOffLocal(){
+  const site = getSiteUrlIdentifier();
+  let siteData = await readLocalStorage(site)
+
+  siteData.info.enabled = !siteData.info.enabled
+
+  const updatedRecord = siteData;
+
+  await saveToLocalStorage(site, updatedRecord);
+
+  alert("extension for this site is enabled: " + siteData.info.enabled)
+
 }
 
 
@@ -210,7 +225,7 @@ async function newShortcut(){
 
 
         if(presentShortcuts === null){
-          await saveToLocalStorage(site,  {"data": [ shortcutInfoObj ], "info": {} })
+          await saveToLocalStorage(site,  {"data": [ shortcutInfoObj ], "info": {"enabled": true} })
 
         }else{
             shortcutrsArr = presentShortcuts["data"]
@@ -282,8 +297,8 @@ chrome.runtime.onMessage.addListener(async function(request){
     return
   }
 
-
-  if(!isExtensionEnabled()){
+  const isEnabled = await isExtensionEnabled() 
+  if(!isEnabled){
     return
   }
   
@@ -291,6 +306,7 @@ chrome.runtime.onMessage.addListener(async function(request){
   {
     await  newShortcut();
   } else if(request.length >=2 && request.substr(0, 7) === "Delete_"){
+
     const shortcutToDelete = request.substr(7, request.length - 1).toLowerCase();
     await DeleteShortcut(shortcutToDelete)
    
@@ -304,7 +320,8 @@ chrome.runtime.onMessage.addListener(async function(request){
 })
 
 document.addEventListener('keydown', async (e) => {
-  if(!isExtensionEnabled()){
+  const isEnabled = await isExtensionEnabled();
+  if(!isEnabled){
     return
   }
 
