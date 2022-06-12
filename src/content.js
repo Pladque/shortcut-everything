@@ -70,6 +70,125 @@ function goToHref(h){
     window.location.href = h
 }
 
+
+//////////////////////
+var shortcut = {
+  // (A) SET SHORTCUT KEYS TO LISTEN TO
+  listen: null,
+  set: (listen) => {
+    // (A1) KEY SEQUENCE + FUNCTION TO RUN
+    shortcut.listen = listen;
+
+    // (A2) KEY PRESS LISTENERS
+    window.addEventListener('keydown', (evt) => {
+      shortcut.track(evt.key.toLowerCase(), true);
+    });
+    window.addEventListener('keyup', (evt) => {
+      shortcut.track(evt.key.toLowerCase(), false);
+    });
+  },
+
+  // (B) KEY PRESS SEQUENCE TRACKER
+  sequence: [],
+  track: (key, direction) => {
+    // (B1) PREVENT AUTO CLEANING
+    if (shortcut.junk != null) {
+      clearTimeout(shortcut.junk);
+    }
+
+    // (B2) KEY DOWN
+    if (direction) {
+      if (!shortcut.sequence.includes(key)) {
+        shortcut.sequence.push(key);
+      }
+    }
+
+    // (B3) KEY UP
+    else {
+      let idx = shortcut.sequence.indexOf(key);
+      if (idx != -1) {
+        shortcut.sequence.splice(idx, 1);
+      }
+    }
+
+    // (B4) HIT SHORTCUT?
+    if (shortcut.sequence.length != 0) {
+      let seq = shortcut.sequence.join('-');
+      if (shortcut.listen[seq]) {
+        shortcut.sequence = [];
+        shortcut.listen[seq]();
+      }
+
+      // (B5) PREVENT "STUCK SEQUENCE" WHEN USER LEAVES PAGE
+      // E.G. OPEN NEW TAB WHILE IN MIDDLE OF KEY PRESS SEQUENCE
+      else {
+        shortcut.junk = setTimeout(shortcut.clean, 600);
+      }
+    }
+  },
+
+  // (C) AUTO CLEANUP
+  junk: null,
+  clean: () => {
+    shortcut.junk = null;
+    shortcut.sequence = [];
+  },
+};
+
+
+window.addEventListener('load', async (event) => {
+
+  
+  const data = await readLocalStorage(getSiteUrlIdentifier())
+  alert(JSON.stringify(data.data))
+  
+  let shortCutInfo = {}
+  for(let i = 0; i < data.data.length; i++){
+    shortCutInfo[data.data[i].shortcut] = () => {
+
+      if(data.info.enabled){
+        const savedShortCut = data.data[i].attributes
+        console.error(savedShortCut)
+        if(savedShortCut){
+          const next_href = getHrefFromElementWithProperties(savedShortCut) 
+    
+          if(next_href === "null"){
+            alert("ERROR, cannot find href in element")
+          }
+          else{
+            goToHref(next_href)
+          }
+    
+        }
+      }
+      
+
+    }
+  }
+
+  await shortcut.set(shortCutInfo).catch(e => {
+    console.log(e);
+  });
+
+
+});
+
+/*
+ shortcut.set({
+    'control-shift-k': () => {
+      alert("ctrl shift k")   // i tutaj bedzie cala logika
+      // ktora wczesniej byla w "keyDown"
+      // tylko lekko zmodyfikowana ofc, bo teraz juz bd mial dostep
+      // do wszystkich zmiennych
+    },
+    '.-/-shift': () => {
+      alert("alt n")
+    },
+  });
+
+*/
+
+
       
 //// HELPERS/OTHER //////// HELPERS/OTHER //////// HELPERS/OTHER //////// HELPERS/OTHER ////
 //@desc: functions to help in other functions, functions that doesnt fit anywhere else
@@ -112,6 +231,7 @@ function getSiteUrlIdentifier(){
 function getIndefOfShortcut(shortcutrsArr, shortcut){
   let index = -1;
   for(let i =0; i< shortcutrsArr.length; i++){
+    console.error(shortcutrsArr[i]["shortcut"] + " vs " + shortcut)
     if(shortcutrsArr[i]["shortcut"] === shortcut){
       index = i;
       break;
@@ -121,8 +241,8 @@ function getIndefOfShortcut(shortcutrsArr, shortcut){
   return index
 }
 
-function getShortcut(e){
-  return e.key.toLowerCase();
+function getShortcut(keySequence){
+  return new Array(...keySequence).join('-').toLowerCase();
 }
 
 function getURL(){
@@ -215,14 +335,40 @@ async function onOffLocal(){
 
 }
 
-
+let keySequence = new Set()
+let keySequenceStack = []
 async function newShortcut(){
   READ_ACTIVE = false;
     document.addEventListener('keydown', async (e) =>{
-      const shortcut = getShortcut(e);
+      
+      
+      if(e.key.toLowerCase() !== "enter"){
+        if(e.key.toLowerCase() === "backspace"){
+          keySequence.delete(keySequenceStack.pop())
+          console.error(new Array(...keySequence).join(' '))
+        }
+        else{
+          keySequence.add(e.key.toLowerCase());
+          keySequenceStack.push(e.key.toLowerCase())
+        }
+        
+        return
+      }
+      
+      // console.error(new Array(...keySequence).join('-'))
+      
+      let shortcut = getShortcut(keySequence);
+      keySequence.clear()
+      keySequenceStack = []
+      
+      console.error(shortcut.length )
 
       document.body.addEventListener('click', async (e) => {
-
+         if(READ_ACTIVE || shortcut.length === 0){
+           return
+        }
+        
+        READ_ACTIVE = true;
         const elementProperties = await getButtonInfo(e).catch(e => {
             console.log(e);
         });
@@ -238,6 +384,7 @@ async function newShortcut(){
           
         }
 
+
         const description = "No description provided"
         const shortcutInfoObj = {"shortcut": shortcut, "attributes": elementProperties, "desc": description}
 
@@ -245,26 +392,38 @@ async function newShortcut(){
         if(presentShortcuts === null || presentShortcuts === undefined){
           await saveToLocalStorage(site,  {"data": [ shortcutInfoObj ], "info": {"enabled": true} }).catch(e => {
             console.log(e);
-        });
-
+          });
+          // alert(JSON.stringify({"data": [ shortcutInfoObj ], "info": {"enabled": true} }))
         }else{
-            // alert(JSON.stringify(presentShortcuts))
-            shortcutrsArr = presentShortcuts["data"]
+          // alert(JSON.stringify(presentShortcuts))
+          shortcutrsArr = presentShortcuts["data"]
           
-            let overridingShourtcutIndex = getIndefOfShortcut(shortcutrsArr, shortcut)
-            
-            if(overridingShourtcutIndex === -1){  // add new shortcut
-              shortcutrsArr.push(shortcutInfoObj) 
-            }else{  // override shortcut
-              shortcutrsArr[overridingShourtcutIndex] = shortcutInfoObj
-            }
+          let overridingShourtcutIndex = getIndefOfShortcut(shortcutrsArr, shortcut)
+          
+          
+          // alert(overridingShourtcutIndex)
+          if(overridingShourtcutIndex === -1){  // add new shortcut
+            // alert(shortcutrsArr.length)
+            shortcutrsArr.push(shortcutInfoObj) 
+            // alert(shortcutrsArr.length)
+          }else{  // override shortcut
+            shortcutrsArr[overridingShourtcutIndex] = shortcutInfoObj
+          }
 
-            await saveToLocalStorage(site,  {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {
-                console.log(e);
+          // alert(shortcutrsArr.join("   "))
+          
+          await saveToLocalStorage(site,  {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {
+              console.log(e);
             });
+            
+            // alert(JSON.stringify({"data": shortcutrsArr, info: presentShortcuts["info"]}))
+          }
 
-            READ_ACTIVE = true;
-        }
+          keySequence.clear()
+          keySequenceStack = []
+          shortcut = ""
+
+          console.error("shortcut: " + shortcut)
       }
       , true)
     });
@@ -383,3 +542,23 @@ document.addEventListener('keydown', async (e) => {
     }
   }
 });
+
+
+
+document.onkeydown = function (e) {
+  //remove this function if you dont want to block default action
+  // normalize event
+  e = e || window.event;
+
+  // detecting multiple keys, e.g: Ctrl + shift + k and block default action (in edge it duplicates tab)
+  if (e.ctrlKey && !e.altKey && e.shiftKey && e.keyCode === 75) {
+    //75 means k [*]
+    // prevent default action
+    if (e.preventDefault) {
+      e.preventDefault();
+    }
+    // IE
+    e.returnValue = false;
+  }
+};
+
