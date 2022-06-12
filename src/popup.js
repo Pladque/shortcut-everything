@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     
     document.getElementById('new_shortcut').addEventListener('click', onclick_newShortcut, false)
-    document.getElementById('on/off button global').addEventListener('click', onclick_onOffGlobal, false)
+    document.getElementById('show shortcuts').addEventListener('click', onclick_showShortcuts, false)
     document.getElementById('on/off button local').addEventListener('click', onclick_onOffLocal, false)
     document.getElementById('reset storage').addEventListener('click', onclick_resetStorage, false)
     document.getElementById('delete shortcut submit').addEventListener('click', function() { 
@@ -16,10 +16,9 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
   
-  function onclick_onOffGlobal () {
+  function onclick_showShortcuts () {
       chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
-          chrome.tabs.sendMessage(tabs[0].id, 'onOff_global')
-          
+          chrome.tabs.sendMessage(tabs[0].id, 'show_shortcuts')
       })
   }
 

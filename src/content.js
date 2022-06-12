@@ -1,7 +1,7 @@
 //// GLOBAL VALUES ///////// GLOBAL VALUES ///////// GLOBAL VALUES ///////// GLOBAL VALUES /////
 
 var READ_ACTIVE = true;
-var isEnabledGlobal = true
+var isExtensionEnabled = true;
   
 //// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  ////
 //@desc: place to write code directly connecting with storage
@@ -29,6 +29,34 @@ const clearStorage = async(msg) => {
   });
 
 }
+
+
+function updateCache(data){
+
+  let shortCutInfo = {}
+  for(let i = 0; i < data.data.length; i++){
+    shortCutInfo[data.data[i].shortcut] = () => {
+      
+      if(isExtensionEnabled){
+        const savedShortCut = data.data[i].attributes
+        if(savedShortCut){
+          const next_href = getHrefFromElementWithProperties(savedShortCut) 
+          alert(next_href === "null")
+          if(next_href === "null"){
+            alert("ERROR, cannot find href in element")
+          }
+          else{
+            goToHref(next_href)
+          }
+    
+        }
+      }
+    }
+  }
+
+  return shortCutInfo;
+}
+
 const saveToLocalStorage = async(name, obj) =>{
 
   let dynamicRecord = {}
@@ -40,6 +68,12 @@ const saveToLocalStorage = async(name, obj) =>{
         console.error(chrome.runtime.lastError.message);
     }
   }).catch(e => {
+    console.log(e);
+  });
+
+  const shortCutInfo = updateCache(obj)
+
+  await shortcut.set(shortCutInfo).catch(e => {
     console.log(e);
 });
 
@@ -56,7 +90,6 @@ async function readShortcut(e) {
   const avalibleShortcuts = await readLocalStorage(site).catch(e => {
     console.log(e);
 });
-  // alert(JSON.stringify(avalibleShortcuts["data"]))
   for(let i =0; i<avalibleShortcuts["data"].length; i++){
     if (e.key === avalibleShortcuts["data"][i]["shortcut"]){
       return avalibleShortcuts["data"][i]["attributes"]
@@ -71,7 +104,6 @@ function goToHref(h){
 }
 
 
-//////////////////////
 var shortcut = {
   // (A) SET SHORTCUT KEYS TO LISTEN TO
   listen: null,
@@ -134,61 +166,6 @@ var shortcut = {
     shortcut.sequence = [];
   },
 };
-
-
-window.addEventListener('load', async (event) => {
-
-  
-  const data = await readLocalStorage(getSiteUrlIdentifier())
-  alert(JSON.stringify(data.data))
-  
-  let shortCutInfo = {}
-  for(let i = 0; i < data.data.length; i++){
-    shortCutInfo[data.data[i].shortcut] = () => {
-
-      if(data.info.enabled){
-        const savedShortCut = data.data[i].attributes
-        console.error(savedShortCut)
-        if(savedShortCut){
-          const next_href = getHrefFromElementWithProperties(savedShortCut) 
-    
-          if(next_href === "null"){
-            alert("ERROR, cannot find href in element")
-          }
-          else{
-            goToHref(next_href)
-          }
-    
-        }
-      }
-      
-
-    }
-  }
-
-  await shortcut.set(shortCutInfo).catch(e => {
-    console.log(e);
-  });
-
-
-});
-
-/*
- shortcut.set({
-    'control-shift-k': () => {
-      alert("ctrl shift k")   // i tutaj bedzie cala logika
-      // ktora wczesniej byla w "keyDown"
-      // tylko lekko zmodyfikowana ofc, bo teraz juz bd mial dostep
-      // do wszystkich zmiennych
-    },
-    '.-/-shift': () => {
-      alert("alt n")
-    },
-  });
-
-*/
-
-
       
 //// HELPERS/OTHER //////// HELPERS/OTHER //////// HELPERS/OTHER //////// HELPERS/OTHER ////
 //@desc: functions to help in other functions, functions that doesnt fit anywhere else
@@ -204,22 +181,6 @@ function parseURL(url){
     return parsed
 }
 
-async function isExtensionEnabled(){
-  
-  const site = getSiteUrlIdentifier();
-
-  let siteData = await readLocalStorage(site).catch(e => {
-    console.log(e);
-});
-
-  if(siteData && siteData.info){
-      const isEnabledOnCurrentSite = siteData.info.enabled;
-      return isEnabledGlobal && isEnabledOnCurrentSite;
-  }
-  else return isEnabledGlobal
-
-}
-
 //// GETs //////// GETs //////// GETs //////// GETs //////// GETs //////// GETs //////// GETs ////
 //@desc: getters
 
@@ -231,7 +192,6 @@ function getSiteUrlIdentifier(){
 function getIndefOfShortcut(shortcutrsArr, shortcut){
   let index = -1;
   for(let i =0; i< shortcutrsArr.length; i++){
-    console.error(shortcutrsArr[i]["shortcut"] + " vs " + shortcut)
     if(shortcutrsArr[i]["shortcut"] === shortcut){
       index = i;
       break;
@@ -311,25 +271,22 @@ async function getButtonInfo(e){
 //// EVENTS FUNCTIONS /////// EVENTS FUNCTIONS /////// EVENTS FUNCTIONS /////// EVENTS FUNCTIONS ///
 //@desc: functions to run inside event listener(s)
 
-function onOffGlobal(){
-  isEnabledGlobal = !isEnabledGlobal
-  alert("extension is on: " + isEnabledGlobal)
-}
 
 
 async function onOffLocal(){
   const site = getSiteUrlIdentifier();
+
   let siteData = await readLocalStorage(site).catch(e => {
     console.log(e);
-});
+  });
 
   siteData.info.enabled = !siteData.info.enabled
-
+  isExtensionEnabled = siteData.info.enabled;
   const updatedRecord = siteData;
 
   await saveToLocalStorage(site, updatedRecord).catch(e => {
     console.log(e);
-});;
+  });;
 
   alert("extension for this site is enabled: " + siteData.info.enabled)
 
@@ -345,7 +302,6 @@ async function newShortcut(){
       if(e.key.toLowerCase() !== "enter"){
         if(e.key.toLowerCase() === "backspace"){
           keySequence.delete(keySequenceStack.pop())
-          console.error(new Array(...keySequence).join(' '))
         }
         else{
           keySequence.add(e.key.toLowerCase());
@@ -355,13 +311,10 @@ async function newShortcut(){
         return
       }
       
-      // console.error(new Array(...keySequence).join('-'))
-      
       let shortcut = getShortcut(keySequence);
       keySequence.clear()
       keySequenceStack = []
       
-      console.error(shortcut.length )
 
       document.body.addEventListener('click', async (e) => {
          if(READ_ACTIVE || shortcut.length === 0){
@@ -384,46 +337,32 @@ async function newShortcut(){
           
         }
 
-
         const description = "No description provided"
         const shortcutInfoObj = {"shortcut": shortcut, "attributes": elementProperties, "desc": description}
-
 
         if(presentShortcuts === null || presentShortcuts === undefined){
           await saveToLocalStorage(site,  {"data": [ shortcutInfoObj ], "info": {"enabled": true} }).catch(e => {
             console.log(e);
           });
-          // alert(JSON.stringify({"data": [ shortcutInfoObj ], "info": {"enabled": true} }))
         }else{
-          // alert(JSON.stringify(presentShortcuts))
           shortcutrsArr = presentShortcuts["data"]
           
           let overridingShourtcutIndex = getIndefOfShortcut(shortcutrsArr, shortcut)
           
-          
-          // alert(overridingShourtcutIndex)
           if(overridingShourtcutIndex === -1){  // add new shortcut
-            // alert(shortcutrsArr.length)
             shortcutrsArr.push(shortcutInfoObj) 
-            // alert(shortcutrsArr.length)
           }else{  // override shortcut
             shortcutrsArr[overridingShourtcutIndex] = shortcutInfoObj
           }
 
-          // alert(shortcutrsArr.join("   "))
-          
           await saveToLocalStorage(site,  {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {
               console.log(e);
             });
-            
-            // alert(JSON.stringify({"data": shortcutrsArr, info: presentShortcuts["info"]}))
           }
 
           keySequence.clear()
           keySequenceStack = []
           shortcut = ""
-
-          console.error("shortcut: " + shortcut)
       }
       , true)
     });
@@ -441,31 +380,47 @@ async function DeleteShortcut(shortcutToDelete){
     
   }
 
+  
   if(presentShortcuts === null){
-    alert("not found aby shortcuts for this site: " + site)
+    alert("not found any shortcuts for this site: " + site)
     return
   }
+  
+  
   shortcutrsArr = presentShortcuts.data
-
+  
   let overridingShourtcutIndex = getIndefOfShortcut(shortcutrsArr, shortcutToDelete)
-
+  
+  
   let shortcutInfo = {}
   if(overridingShourtcutIndex === -1){  // not found shortcut
-    alert("not found shortcut: " +  request.substr(7, request.length - 1) + ". Nothing deleted")
+    alert("not found shortcut: " +  shortcutToDelete + ". Nothing deleted")
     return
   }else{  // delete shortcut
     shortcutInfo = shortcutrsArr[overridingShourtcutIndex] 
     shortcutrsArr.splice(overridingShourtcutIndex, 1);
   }
 
-  await saveToLocalStorage(site, {"data": shortcutrsArr, info: shortcutrsArr["info"]}).catch(e => {
+  // alert(JSON.stringify({"data": shortcutrsArr, info: presentShortcuts["info"]}))
+   await saveToLocalStorage(site, {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {
     console.log(e);
-});
-
+  });
+  
   alert("deleted " + shortcutToDelete +" "+ shortcutInfo["desc"])
+
+  // const shortCutInfo = updateCache({"data": shortcutrsArr, info: shortcutrsArr["info"]})
+
+  // await shortcut.set(shortCutInfo).catch(e => {
+  //   console.log(e);
+
+  //});
+  
+  // alert("Deleted shortcut: " + shortcutToDelete)
 }
 
 async function resetStorage(){
+  shortcut.set({});
+
   await clearStorage("storage cleared").catch(e => {
     console.log(e);
 });
@@ -477,21 +432,20 @@ async function resetStorage(){
 //@desc: main message listener(s) and handler for extension
 
 chrome.runtime.onMessage.addListener(async function(request){
-  if(request === "onOff_global"){
-    onOffGlobal()
+  
+  // temp, just to check sth
+  if(request === "show_shortcuts"){
+    const data = await readLocalStorage(getSiteUrlIdentifier())
+    alert(JSON.stringify(data))
     return
-  }else if(request === 'onOff_local'){
+  }
+
+  if(request === 'onOff_local'){
     onOffLocal()
     return
   }
 
-  const isEnabled = await isExtensionEnabled().catch(e => {
-    console.log(e);
-});
-  if(!isEnabled){
-    return
-  }
-  
+
   if(request==="new_shortcut")
   {
     await  newShortcut().catch(e => {
@@ -513,35 +467,32 @@ chrome.runtime.onMessage.addListener(async function(request){
   else{
     alert("UNKNOWN REQUEST: " + request)
   }
-  
 })
 
-document.addEventListener('keydown', async (e) => {
-  const isEnabled = await isExtensionEnabled().catch(e => {
-    console.log(e);
-});
-  if(!isEnabled){
-    return
-  }
+// document.addEventListener('keydown', async (e) => {
 
-  if(READ_ACTIVE){
-    const savedShortCut = await readShortcut(e).catch(e => {
-        console.log(e);
-    });
+//   if(!isExtensionEnabled){
+//     return
+//   }
+
+//   if(READ_ACTIVE){
+//     const savedShortCut = await readShortcut(e).catch(e => {
+//         console.log(e);
+//     });
     
-    if(savedShortCut){
-      const next_href = getHrefFromElementWithProperties(savedShortCut) 
+//     if(savedShortCut){
+//       const next_href = getHrefFromElementWithProperties(savedShortCut) 
 
-      if(next_href === "null"){
-        alert("ERROR, cannot find href in element")
-      }
-      else{
-        goToHref(next_href)
-      }
+//       if(next_href === "null"){
+//         alert("ERROR, cannot find href in element")
+//       }
+//       else{
+//         goToHref(next_href)
+//       }
 
-    }
-  }
-});
+//     }
+//   }
+// });
 
 
 
@@ -557,8 +508,30 @@ document.onkeydown = function (e) {
     if (e.preventDefault) {
       e.preventDefault();
     }
-    // IE
+    // IEalert
     e.returnValue = false;
   }
 };
+
+
+window.addEventListener('load', async (event) => {
+  const data = await readLocalStorage(getSiteUrlIdentifier())
+  const shortCutInfo = updateCache(data)
+
+  // alert(JSON.stringify(data))
+  if(!data || !data.info){
+    return
+  }
+
+  isExtensionEnabled = data.info.enabled;
+
+  await shortcut.set(shortCutInfo);
+});
+
+// TODO
+//  sprzataj kod
+//  nwm czemu nie ma synchro przy usuwaniu i dodawaniu i 
+//      trzeba odwiezyc zeby dzialalo
+//  zajmij sie tym co rzuca mi errory 
+//    jak odpalam cos a pmaiec pusta!!
 
