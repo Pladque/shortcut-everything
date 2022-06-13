@@ -38,7 +38,7 @@ function prepareDataToCache(data){
     shortCutInfo[data.data[i].shortcut] = () => {
       if(isExtensionEnabled){
         const savedShortCut = data.data[i].attributes
-        if(savedShortCut){
+        if(savedShortCut && READ_ACTIVE){
           const next_href = getHrefFromElementWithProperties(savedShortCut) 
           // alert(next_href === "null")
           if(next_href === "null"){
@@ -74,11 +74,6 @@ async function saveToLocalStorage(name, obj){
   shortcut.set({});
   const shortCutInfo = prepareDataToCache(obj)
   await shortcut.set(shortCutInfo);
-
-  // // O CO CHODZI TO SIE ZAPISUJE A POTEM JEDNAK USUWAA 
-  // // AAAAAAAAAA    --- juz ok xd
-  // const data = await readLocalStorage(getSiteUrlIdentifier())
-  // alert(JSON.stringify(data))
 
 }
 
@@ -508,5 +503,4 @@ window.addEventListener('load', async (event) => {
   }
 
 })
-
 
