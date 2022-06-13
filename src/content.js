@@ -43,6 +43,7 @@ function prepareDataToCache(data){
           // alert(next_href === "null")
           if(next_href === "null"){
             alert("ERROR, cannot find href in element")
+            // return
           }
           else{
             goToHref(next_href)
@@ -56,29 +57,28 @@ function prepareDataToCache(data){
   return shortCutInfo;
 }
 
-const saveToLocalStorage = async(name, obj) =>{
+async function saveToLocalStorage(name, obj){
   let dynamicRecord = {}
   dynamicRecord[name] = obj
   const constRecord = dynamicRecord;
-
   await chrome.storage.local.set(constRecord, async() => {
-    if (chrome.runtime.lastError) {
+  if (chrome.runtime.lastError) {
       console.error(chrome.runtime.lastError.message);
     }
-
-    // updating cache
-    shortcut.set({});
-    const shortCutInfo = prepareDataToCache(obj)
     
-    await shortcut.set(shortCutInfo).catch(e => {
-      console.log(e);
-    });
-
-  }).catch(e => {
-    console.log(e);
+    // updating cache
+    
+    
   });
   
-  // CODE HERE WILL NOT RUN, idk why...
+  shortcut.set({});
+  const shortCutInfo = prepareDataToCache(obj)
+  await shortcut.set(shortCutInfo);
+
+  // // O CO CHODZI TO SIE ZAPISUJE A POTEM JEDNAK USUWAA 
+  // // AAAAAAAAAA    --- juz ok xd
+  // const data = await readLocalStorage(getSiteUrlIdentifier())
+  // alert(JSON.stringify(data))
 
 }
 
@@ -484,19 +484,22 @@ document.onkeydown = function (e) {
 window.addEventListener('load', async (event) => {
 
   try {
+    // alert(1)
     const data = await readLocalStorage(getSiteUrlIdentifier())
+    // alert(2)
     const shortCutInfo = prepareDataToCache(data)
+    // alert(3)
     
     if(!data || !data.info){
       alert("no data")
       return
     }
-  
-    isExtensionEnabled = data.info.enabled;
     
-    await shortcut.set(shortCutInfo).catch(e => {
-      console.log(e);
-    });
+    isExtensionEnabled = data.info.enabled;
+    // alert(4)
+    
+    await shortcut.set(shortCutInfo)
+    //alert(5)
   
   } catch (err) {
     const data = {"data": [], "info": {"enabled": true}}
