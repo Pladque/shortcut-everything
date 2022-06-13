@@ -31,17 +31,16 @@ const clearStorage = async(msg) => {
 }
 
 
-function updateCache(data){
+function prepareDataToCache(data){
 
   let shortCutInfo = {}
   for(let i = 0; i < data.data.length; i++){
     shortCutInfo[data.data[i].shortcut] = () => {
-      
       if(isExtensionEnabled){
         const savedShortCut = data.data[i].attributes
         if(savedShortCut){
           const next_href = getHrefFromElementWithProperties(savedShortCut) 
-          alert(next_href === "null")
+          // alert(next_href === "null")
           if(next_href === "null"){
             alert("ERROR, cannot find href in element")
           }
@@ -58,24 +57,28 @@ function updateCache(data){
 }
 
 const saveToLocalStorage = async(name, obj) =>{
-
   let dynamicRecord = {}
   dynamicRecord[name] = obj
   const constRecord = dynamicRecord;
 
-  await chrome.storage.local.set(constRecord, () => {
+  await chrome.storage.local.set(constRecord, async() => {
     if (chrome.runtime.lastError) {
-        console.error(chrome.runtime.lastError.message);
+      console.error(chrome.runtime.lastError.message);
     }
+
+    // updating cache
+    shortcut.set({});
+    const shortCutInfo = prepareDataToCache(obj)
+    
+    await shortcut.set(shortCutInfo).catch(e => {
+      console.log(e);
+    });
+
   }).catch(e => {
     console.log(e);
   });
-
-  const shortCutInfo = updateCache(obj)
-
-  await shortcut.set(shortCutInfo).catch(e => {
-    console.log(e);
-});
+  
+  // CODE HERE WILL NOT RUN, idk why...
 
 }
 
@@ -270,9 +273,6 @@ async function getButtonInfo(e){
 
 //// EVENTS FUNCTIONS /////// EVENTS FUNCTIONS /////// EVENTS FUNCTIONS /////// EVENTS FUNCTIONS ///
 //@desc: functions to run inside event listener(s)
-
-
-
 async function onOffLocal(){
   const site = getSiteUrlIdentifier();
 
@@ -380,17 +380,14 @@ async function DeleteShortcut(shortcutToDelete){
     
   }
 
-  
   if(presentShortcuts === null){
     alert("not found any shortcuts for this site: " + site)
     return
   }
   
-  
   shortcutrsArr = presentShortcuts.data
   
   let overridingShourtcutIndex = getIndefOfShortcut(shortcutrsArr, shortcutToDelete)
-  
   
   let shortcutInfo = {}
   if(overridingShourtcutIndex === -1){  // not found shortcut
@@ -401,29 +398,25 @@ async function DeleteShortcut(shortcutToDelete){
     shortcutrsArr.splice(overridingShourtcutIndex, 1);
   }
 
-  // alert(JSON.stringify({"data": shortcutrsArr, info: presentShortcuts["info"]}))
    await saveToLocalStorage(site, {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {
     console.log(e);
   });
   
   alert("deleted " + shortcutToDelete +" "+ shortcutInfo["desc"])
 
-  // const shortCutInfo = updateCache({"data": shortcutrsArr, info: shortcutrsArr["info"]})
-
-  // await shortcut.set(shortCutInfo).catch(e => {
-  //   console.log(e);
-
-  //});
-  
-  // alert("Deleted shortcut: " + shortcutToDelete)
 }
 
 async function resetStorage(){
   shortcut.set({});
 
+
+
   await clearStorage("storage cleared").catch(e => {
     console.log(e);
-});
+  });
+
+  const data = {"data": [], "info": {"enabled": isExtensionEnabled}}
+  await saveToLocalStorage(getSiteUrlIdentifier(), data)
 }
 
 
@@ -469,32 +462,6 @@ chrome.runtime.onMessage.addListener(async function(request){
   }
 })
 
-// document.addEventListener('keydown', async (e) => {
-
-//   if(!isExtensionEnabled){
-//     return
-//   }
-
-//   if(READ_ACTIVE){
-//     const savedShortCut = await readShortcut(e).catch(e => {
-//         console.log(e);
-//     });
-    
-//     if(savedShortCut){
-//       const next_href = getHrefFromElementWithProperties(savedShortCut) 
-
-//       if(next_href === "null"){
-//         alert("ERROR, cannot find href in element")
-//       }
-//       else{
-//         goToHref(next_href)
-//       }
-
-//     }
-//   }
-// });
-
-
 
 document.onkeydown = function (e) {
   //remove this function if you dont want to block default action
@@ -515,23 +482,28 @@ document.onkeydown = function (e) {
 
 
 window.addEventListener('load', async (event) => {
-  const data = await readLocalStorage(getSiteUrlIdentifier())
-  const shortCutInfo = updateCache(data)
 
-  // alert(JSON.stringify(data))
-  if(!data || !data.info){
-    return
+  try {
+    const data = await readLocalStorage(getSiteUrlIdentifier())
+    const shortCutInfo = prepareDataToCache(data)
+    
+    if(!data || !data.info){
+      alert("no data")
+      return
+    }
+  
+    isExtensionEnabled = data.info.enabled;
+    
+    await shortcut.set(shortCutInfo).catch(e => {
+      console.log(e);
+    });
+  
+  } catch (err) {
+    const data = {"data": [], "info": {"enabled": true}}
+    await saveToLocalStorage(getSiteUrlIdentifier(), data)
+
   }
 
-  isExtensionEnabled = data.info.enabled;
+})
 
-  await shortcut.set(shortCutInfo);
-});
-
-// TODO
-//  sprzataj kod
-//  nwm czemu nie ma synchro przy usuwaniu i dodawaniu i 
-//      trzeba odwiezyc zeby dzialalo
-//  zajmij sie tym co rzuca mi errory 
-//    jak odpalam cos a pmaiec pusta!!
 
