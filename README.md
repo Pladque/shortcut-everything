@@ -1,5 +1,5 @@
 # shortcut-everything
-### Current version: v0.1
+### Current version: v0.3
 A chrome extension that allows you to create create shortcut and improve yout workflow!
 
 
@@ -16,7 +16,7 @@ Now every time you press that key, it should emulate clicking this button
 - [X] on/off function
 
 ### Features for v0.3
-- [ ] shortcuts consisting of more then 1 key (like "shift+L")
+- [X] shortcuts consisting of more then 1 key (like "shift+L")
 - [X] deleting shortcuts
 
 ### Features for v0.4
