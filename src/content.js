@@ -39,6 +39,7 @@ function prepareDataToCache(data){
       if(isExtensionEnabled){
         const savedShortCut = data.data[i].attributes
         if(savedShortCut && READ_ACTIVE){
+          
           const next_href = getHrefFromElementWithProperties(savedShortCut) 
           // alert(next_href === "null")
           if(next_href === "null"){
@@ -66,11 +67,11 @@ async function saveToLocalStorage(name, obj){
       console.error(chrome.runtime.lastError.message);
     }
     
-    // updating cache
     
     
   });
   
+  // updating cache
   shortcut.set({});
   const shortCutInfo = prepareDataToCache(obj)
   await shortcut.set(shortCutInfo);
@@ -207,15 +208,58 @@ function getURL(){
   return window.location.href
 }
 
+
+function findInChildren(parent, childWannaBe){
+   const childPropertiesJSON = JSON.parse(childWannaBe);
+
+  for(let i = 0; i< parent.children.length; i++) {
+    const childAttributes = parent.children[i].getAttributeNames();
+    let check = true;
+    for(let j = 0; j<childAttributes.length; j++){
+
+      if( parent.children[i].getAttribute(childAttributes[j]) !== childPropertiesJSON[childAttributes[j]]){
+        check = false
+        break;
+      }
+    }
+
+    if(check){
+      return true
+    }else{
+      if(findInChildren(parent.children[i], childWannaBe))
+      {
+        return true
+      }
+    }
+
+  }
+
+  return false
+
+}
+
 // @DESC: based on properies/attributes (like for example class name) returns matched element from
 //        currently open webpage
 // @INPUT: properties in JSON format as a string
 // @RETURNS: href that matches element with given properties or string "null" if not found   
 function getHrefFromElementWithProperties(elementProperties){
+  // teraz elementProperties ma 
+  // "attributes" pole i "orginalTargetAttributes"
+
+  // alert(JSON.stringify(elementProperties))
+  // return "null"
+
+  // alert(JSON.stringify(elementProperties))
   const allElements = document.body.getElementsByTagName("*");
-  const elementPropertiesJSON = JSON.parse(elementProperties);
+  const elementPropertiesJSON = JSON.parse(elementProperties.parentAttributes);
+  // const elementPropertiesJSON = JSON.parse(elementProperties.attributes);
+  // const orginalPropertiesJSON = JSON.parse(elementProperties.orginalTargetAttributes)
   
+  // alert(allElements.length)
+
+
   let next_href = "null"
+  let foundElement = null
   for(let i =0; i<allElements.length; i++){
     let attributes_names = allElements[i].getAttributeNames();
     let check = true;
@@ -229,13 +273,28 @@ function getHrefFromElementWithProperties(elementProperties){
       }
 
     }
-
     if(allElements[i].getAttribute("href") && check && attributes_names.length>=2)
     {
       next_href = allElements[i].getAttribute("href")
-      break;
+      // alert(elementProperties.orginalTargetAttributes)
+      if(elementProperties.orginalTargetAttributes){
+        // alert(123)
+        // for(let j = 0; j< allElements[i].children.length; j++) {
+        //   alert(allElements[i].children[j].getAttributeNames())
+        // }
+        let isOrginalTargetAChild = findInChildren(allElements[i], elementProperties.orginalTargetAttributes)
+        // alert(isOrginalTargetAChild)
+
+        if(isOrginalTargetAChild){
+          return next_href
+        }
+
+      }else{
+        break;
+      }
     }
   }
+
 
   return next_href
 }
@@ -249,18 +308,43 @@ async function getButtonInfo(e){
   e = e || window.event;
   var target = e.target || e.srcElement
   
+  // dodaj to zeby tez trzymalo dodatkowe informacje o dzieciach
+  const orginalTarget = target
+  while(!target.hasAttribute("href")){
+    target = target.parentElement;
+
+  }
+  
+  
   var temp_button_data = {};
   const attrsNames = target.getAttributeNames();
-
   for(let i =0; i<attrsNames.length; i++){
+    // alert(target.getAttribute(attrsNames[i]))
     if(attrsNames[i]=== "href"){
       continue;
     }
     temp_button_data[attrsNames[i]] =  target.getAttribute(attrsNames[i]);
   }
 
+  let button_data = {}
+  button_data.parentAttributes = JSON.stringify(temp_button_data)
+
+  temp_button_data = {};
+  const attrsNamesOrginal = orginalTarget.getAttributeNames();
+  for(let i =0; i<attrsNamesOrginal.length; i++){
+    // alert(target.getAttribute(attrsNames[i]))
+    if(attrsNamesOrginal[i]=== "href"){
+      continue;
+    }
+    temp_button_data[attrsNamesOrginal[i]] =  orginalTarget.getAttribute(attrsNamesOrginal[i]);
+  }
   
-  const button_data = JSON.stringify(temp_button_data)
+
+  if(target !== orginalTarget){
+    button_data.orginalTargetAttributes = JSON.stringify(temp_button_data)
+  }
+
+  // alert(JSON.stringify(button_data))
 
   return button_data
 
@@ -317,9 +401,11 @@ async function newShortcut(){
         }
         
         READ_ACTIVE = true;
-        const elementProperties = await getButtonInfo(e).catch(e => {
+        const elementPropertiesWithOrginal = await getButtonInfo(e).catch(e => {
             console.log(e);
         });
+        // const elementProperties = elementPropertiesWithOrginal.attributes
+        
         const site = getSiteUrlIdentifier();
     
         let presentShortcuts = null
@@ -333,7 +419,7 @@ async function newShortcut(){
         }
 
         const description = "No description provided"
-        const shortcutInfoObj = {"shortcut": shortcut, "attributes": elementProperties, "desc": description}
+        const shortcutInfoObj = {"shortcut": shortcut, "attributes": elementPropertiesWithOrginal, "desc": description}
 
         if(presentShortcuts === null || presentShortcuts === undefined){
           await saveToLocalStorage(site,  {"data": [ shortcutInfoObj ], "info": {"enabled": true} }).catch(e => {
@@ -403,8 +489,6 @@ async function DeleteShortcut(shortcutToDelete){
 
 async function resetStorage(){
   shortcut.set({});
-
-
 
   await clearStorage("storage cleared").catch(e => {
     console.log(e);
