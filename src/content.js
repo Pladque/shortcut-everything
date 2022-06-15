@@ -224,17 +224,18 @@ function findInChildren(parent, childWannaBe){
     }
 
     if(check){
-      return true
+      return parent.children[i]
     }else{
-      if(findInChildren(parent.children[i], childWannaBe))
+      const possibleChild = findInChildren(parent.children[i], childWannaBe)
+      if(possibleChild !== null)
       {
-        return true
+        return possibleChild
       }
     }
 
   }
 
-  return false
+  return null
 
 }
 
@@ -243,23 +244,13 @@ function findInChildren(parent, childWannaBe){
 // @INPUT: properties in JSON format as a string
 // @RETURNS: href that matches element with given properties or string "null" if not found   
 function getHrefFromElementWithProperties(elementProperties){
-  // teraz elementProperties ma 
-  // "attributes" pole i "orginalTargetAttributes"
-
-  // alert(JSON.stringify(elementProperties))
-  // return "null"
-
-  // alert(JSON.stringify(elementProperties))
   const allElements = document.body.getElementsByTagName("*");
   const elementPropertiesJSON = JSON.parse(elementProperties.parentAttributes);
-  // const elementPropertiesJSON = JSON.parse(elementProperties.attributes);
-  // const orginalPropertiesJSON = JSON.parse(elementProperties.orginalTargetAttributes)
-  
-  // alert(allElements.length)
+  const innerText = elementProperties.others.innerText
+  const checkInnerText = elementProperties.others.checkInnerText
 
 
   let next_href = "null"
-  let foundElement = null
   for(let i =0; i<allElements.length; i++){
     let attributes_names = allElements[i].getAttributeNames();
     let check = true;
@@ -276,17 +267,13 @@ function getHrefFromElementWithProperties(elementProperties){
     if(allElements[i].getAttribute("href") && check && attributes_names.length>=2)
     {
       next_href = allElements[i].getAttribute("href")
-      // alert(elementProperties.orginalTargetAttributes)
       if(elementProperties.orginalTargetAttributes){
-        // alert(123)
-        // for(let j = 0; j< allElements[i].children.length; j++) {
-        //   alert(allElements[i].children[j].getAttributeNames())
-        // }
-        let isOrginalTargetAChild = findInChildren(allElements[i], elementProperties.orginalTargetAttributes)
-        // alert(isOrginalTargetAChild)
+        let OrginalTargetAChild = findInChildren(allElements[i], elementProperties.orginalTargetAttributes)
 
-        if(isOrginalTargetAChild){
-          return next_href
+        if(OrginalTargetAChild !== null){
+          if(OrginalTargetAChild.innerText === innerText || checkInnerText===false){
+            return next_href
+          }
         }
 
       }else{
@@ -343,6 +330,9 @@ async function getButtonInfo(e){
   if(target !== orginalTarget){
     button_data.orginalTargetAttributes = JSON.stringify(temp_button_data)
   }
+
+  button_data.others = {checkInnerText: true}
+  button_data.others.innerText = orginalTarget.innerText
 
   // alert(JSON.stringify(button_data))
 
@@ -587,4 +577,6 @@ window.addEventListener('load', async (event) => {
   }
 
 })
+
+
 
