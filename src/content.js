@@ -2,10 +2,18 @@
 
 var READ_ACTIVE = true;
 var isExtensionEnabled = true;
-  
+
+const REQUEST_SEPARATOR = "_";
+const DELETE_SHORTCUTS_MSG = "Delete";
+const CLEAR_STORAGE_MSG = "RESET" + REQUEST_SEPARATOR + "FULL"          // "RESET_FULL"
+const CREATE_NEW_SHOWRTCUT_MSG = "new" + REQUEST_SEPARATOR + "shortcut" // "new_shortcut"
+const ON_OFF_LOCAL_MSG = "onOff" + REQUEST_SEPARATOR + "local"          // "onOff_local"
+const GET_SHORTCUTS = "show" + REQUEST_SEPARATOR + "shortcuts"          // "show_shortcuts"
+
+const ATTRIBIUTES_TO_SKIP = ["href"]
+
 //// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  ////
 //@desc: place to write code directly connecting with storage
-
 const readLocalStorage = async (key) => {
     return new Promise((resolve, reject) => {
       chrome.storage.local.get([key], function (result) {
@@ -18,6 +26,7 @@ const readLocalStorage = async (key) => {
     });
   };
 
+// clears only local storage (no cache update)
 const clearStorage = async(msg) => {
   chrome.storage.local.clear(function() {
     var error = chrome.runtime.lastError;
@@ -27,10 +36,29 @@ const clearStorage = async(msg) => {
     if(msg!== null)
       alert(msg)
   });
+}
+
+// saves to local storage & updates cache
+async function saveToLocalStorage(name, obj){
+  let dynamicRecord = {}
+  dynamicRecord[name] = obj
+  const constRecord = dynamicRecord;
+  await chrome.storage.local.set(constRecord, async() => {
+  if (chrome.runtime.lastError) {
+      console.error(chrome.runtime.lastError.message);
+    }
+  });
+  
+  // updating cache
+  shortcut.set({});
+  const shortCutInfo = prepareDataToCache(obj)
+  await shortcut.set(shortCutInfo);
 
 }
 
+///// STORAGE RELATED / CACHE ////////// STORAGE RELATED / CACHE ////////// STORAGE RELATED / CACHE ////////// STORAGE RELATED / CACHE /////
 
+// prepares data from memory to save inside cache
 function prepareDataToCache(data){
 
   let shortCutInfo = {}
@@ -39,11 +67,10 @@ function prepareDataToCache(data){
       if(isExtensionEnabled){
         const savedShortCut = data.data[i].attributes
         if(savedShortCut && READ_ACTIVE){
+          
           const next_href = getHrefFromElementWithProperties(savedShortCut) 
-          // alert(next_href === "null")
           if(next_href === "null"){
             alert("ERROR, cannot find href in element")
-            // return
           }
           else{
             goToHref(next_href)
@@ -57,50 +84,19 @@ function prepareDataToCache(data){
   return shortCutInfo;
 }
 
-async function saveToLocalStorage(name, obj){
-  let dynamicRecord = {}
-  dynamicRecord[name] = obj
-  const constRecord = dynamicRecord;
-  await chrome.storage.local.set(constRecord, async() => {
-  if (chrome.runtime.lastError) {
-      console.error(chrome.runtime.lastError.message);
-    }
-    
-    // updating cache
-    
-    
-  });
-  
+// resets storage & cache
+async function resetStorage(){
   shortcut.set({});
-  const shortCutInfo = prepareDataToCache(obj)
-  await shortcut.set(shortCutInfo);
 
+  await clearStorage("storage cleared").catch(e => {console.log(e);});
+
+  const data = {"data": [], "info": {"enabled": isExtensionEnabled}}
+  await saveToLocalStorage(getSiteUrlIdentifier(), data)
 }
 
-//// SHORTCUT READERS //////// SHORTCUT READERS //////// SHORTCUT READERS //////// SHORTCUT READERS ////
-//@desc: functions connected to reading shortcut and mathing it records from storage
 
-// @DESC: Compares event.key with avalible shortcuts
-// @INPUT: event
-// @RETURNS: element properties saved for this shortcut or null if not found 
-async function readShortcut(e) {
-  const site = getSiteUrlIdentifier();
-  const avalibleShortcuts = await readLocalStorage(site).catch(e => {
-    console.log(e);
-});
-  for(let i =0; i<avalibleShortcuts["data"].length; i++){
-    if (e.key === avalibleShortcuts["data"][i]["shortcut"]){
-      return avalibleShortcuts["data"][i]["attributes"]
-    }
-  }
-
-  return null
-}
-
-function goToHref(h){
-    window.location.href = h
-}
-
+//// SHORTCUT READER //////// SHORTCUT READER //////// SHORTCUT READER //////// SHORTCUT READER ////
+//@desc: main object that listens for key inputs and runs code realted to given shortcut
 
 var shortcut = {
   // (A) SET SHORTCUT KEYS TO LISTEN TO
@@ -179,15 +175,19 @@ function parseURL(url){
     return parsed
 }
 
+function goToHref(h){
+    window.location.href = h
+}
+
+
 //// GETs //////// GETs //////// GETs //////// GETs //////// GETs //////// GETs //////// GETs ////
-//@desc: getters
 
 function getSiteUrlIdentifier(){
   const url = getURL();
   return parseURL(url)
 }
 
-function getIndefOfShortcut(shortcutrsArr, shortcut){
+function getIndexOfShortcut(shortcutrsArr, shortcut){
   let index = -1;
   for(let i =0; i< shortcutrsArr.length; i++){
     if(shortcutrsArr[i]["shortcut"] === shortcut){
@@ -207,14 +207,48 @@ function getURL(){
   return window.location.href
 }
 
+// recursively looks for childWannaBe in All childern of parent(and childer of children, and so on)
+// return children if found or null if not found
+function getChild(parent, childWannaBe){
+   const childPropertiesJSON = JSON.parse(childWannaBe);
+
+  for(let i = 0; i< parent.children.length; i++) {
+    const childAttributes = parent.children[i].getAttributeNames();
+    let check = true;
+    for(let j = 0; j<childAttributes.length; j++){
+
+      if( parent.children[i].getAttribute(childAttributes[j]) !== childPropertiesJSON[childAttributes[j]]){
+        check = false
+        break;
+      }
+    }
+
+    if(check){
+      return parent.children[i]
+    }else{
+      const possibleChild = getChild(parent.children[i], childWannaBe)
+      if(possibleChild !== null)
+      {
+        return possibleChild
+      }
+    }
+
+  }
+
+  return null
+
+}
+
 // @DESC: based on properies/attributes (like for example class name) returns matched element from
 //        currently open webpage
 // @INPUT: properties in JSON format as a string
 // @RETURNS: href that matches element with given properties or string "null" if not found   
 function getHrefFromElementWithProperties(elementProperties){
   const allElements = document.body.getElementsByTagName("*");
-  const elementPropertiesJSON = JSON.parse(elementProperties);
-  
+  const elementPropertiesJSON = JSON.parse(elementProperties.parentAttributes);
+  const innerText = elementProperties.others.innerText
+  const checkInnerText = elementProperties.others.checkInnerText
+
   let next_href = "null"
   for(let i =0; i<allElements.length; i++){
     let attributes_names = allElements[i].getAttributeNames();
@@ -229,15 +263,41 @@ function getHrefFromElementWithProperties(elementProperties){
       }
 
     }
-
     if(allElements[i].getAttribute("href") && check && attributes_names.length>=2)
     {
       next_href = allElements[i].getAttribute("href")
-      break;
+      if(elementProperties.orginalTargetAttributes){
+        let OrginalTargetAChild = getChild(allElements[i], elementProperties.orginalTargetAttributes)
+
+        if(OrginalTargetAChild !== null){
+          if(OrginalTargetAChild.innerText === innerText || checkInnerText===false){
+            return next_href
+          }
+        }
+
+      }else{
+        break;
+      }
     }
   }
 
+
   return next_href
+}
+
+function createArrFromAttribiutes(target){
+  var temp_button_data = {};
+  const attrsNames = target.getAttributeNames();
+
+  for(let i =0; i<attrsNames.length; i++){
+    if(ATTRIBIUTES_TO_SKIP.includes(attrsNames[i])){
+      continue;
+    }
+
+    temp_button_data[attrsNames[i]] =  target.getAttribute(attrsNames[i]);
+  }
+
+  return temp_button_data;
 }
 
 // @DESC: Gets data from object (element) user clicked on 
@@ -249,18 +309,20 @@ async function getButtonInfo(e){
   e = e || window.event;
   var target = e.target || e.srcElement
   
-  var temp_button_data = {};
-  const attrsNames = target.getAttributeNames();
-
-  for(let i =0; i<attrsNames.length; i++){
-    if(attrsNames[i]=== "href"){
-      continue;
-    }
-    temp_button_data[attrsNames[i]] =  target.getAttribute(attrsNames[i]);
+  const orginalTarget = target
+  while(!target.hasAttribute("href")){
+    target = target.parentElement;
   }
 
-  
-  const button_data = JSON.stringify(temp_button_data)
+  let button_data = {}
+  button_data.parentAttributes = JSON.stringify(createArrFromAttribiutes(target))
+
+  if(target !== orginalTarget){
+    button_data.orginalTargetAttributes = JSON.stringify(createArrFromAttribiutes(orginalTarget))
+  }
+
+  button_data.others = {checkInnerText: true}
+  button_data.others.innerText = orginalTarget.innerText
 
   return button_data
 
@@ -268,6 +330,7 @@ async function getButtonInfo(e){
 
 //// EVENTS FUNCTIONS /////// EVENTS FUNCTIONS /////// EVENTS FUNCTIONS /////// EVENTS FUNCTIONS ///
 //@desc: functions to run inside event listener(s)
+
 async function onOffLocal(){
   const site = getSiteUrlIdentifier();
 
@@ -287,14 +350,12 @@ async function onOffLocal(){
 
 }
 
+
 let keySequence = new Set()
 let keySequenceStack = []
-async function newShortcut(){
-  READ_ACTIVE = false;
-    document.addEventListener('keydown', async (e) =>{
-      
-      
-      if(e.key.toLowerCase() !== "enter"){
+function getShortcutFromUser(e){
+
+  if(e.key.toLowerCase() !== "enter"){
         if(e.key.toLowerCase() === "backspace"){
           keySequence.delete(keySequenceStack.pop())
         }
@@ -309,17 +370,27 @@ async function newShortcut(){
       let shortcut = getShortcut(keySequence);
       keySequence.clear()
       keySequenceStack = []
-      
 
+      return shortcut;
+}
+
+
+async function newShortcut(){
+  READ_ACTIVE = false;
+    document.addEventListener('keydown', async (e) =>{
+      
+      let shortcut = getShortcutFromUser(e)
+      
       document.body.addEventListener('click', async (e) => {
-         if(READ_ACTIVE || shortcut.length === 0){
-           return
+        if(READ_ACTIVE || shortcut === undefined){
+          return
         }
-        
         READ_ACTIVE = true;
-        const elementProperties = await getButtonInfo(e).catch(e => {
+        
+        const elementPropertiesWithOrginal = await getButtonInfo(e).catch(e => {
             console.log(e);
         });
+        
         const site = getSiteUrlIdentifier();
     
         let presentShortcuts = null
@@ -333,7 +404,7 @@ async function newShortcut(){
         }
 
         const description = "No description provided"
-        const shortcutInfoObj = {"shortcut": shortcut, "attributes": elementProperties, "desc": description}
+        const shortcutInfoObj = {"shortcut": shortcut, "attributes": elementPropertiesWithOrginal, "desc": description, "options": {enabled: true  }}
 
         if(presentShortcuts === null || presentShortcuts === undefined){
           await saveToLocalStorage(site,  {"data": [ shortcutInfoObj ], "info": {"enabled": true} }).catch(e => {
@@ -342,12 +413,12 @@ async function newShortcut(){
         }else{
           shortcutrsArr = presentShortcuts["data"]
           
-          let overridingShourtcutIndex = getIndefOfShortcut(shortcutrsArr, shortcut)
+          let indexOfShortcut = getIndexOfShortcut(shortcutrsArr, shortcut)
           
-          if(overridingShourtcutIndex === -1){  // add new shortcut
+          if(indexOfShortcut === -1){  // add new shortcut
             shortcutrsArr.push(shortcutInfoObj) 
           }else{  // override shortcut
-            shortcutrsArr[overridingShourtcutIndex] = shortcutInfoObj
+            shortcutrsArr[indexOfShortcut] = shortcutInfoObj
           }
 
           await saveToLocalStorage(site,  {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {
@@ -355,8 +426,6 @@ async function newShortcut(){
             });
           }
 
-          keySequence.clear()
-          keySequenceStack = []
           shortcut = ""
       }
       , true)
@@ -367,13 +436,10 @@ async function newShortcut(){
 async function DeleteShortcut(shortcutToDelete){
   const site = getSiteUrlIdentifier();
   let presentShortcuts = null
+
   try {
-    presentShortcuts = await readLocalStorage(site).catch(e => {
-        console.log(e);
-    });
-  } catch (error) {
-    
-  }
+    presentShortcuts = await readLocalStorage(site).catch(e => {console.log(e);});
+  } catch (error) {  }
 
   if(presentShortcuts === null){
     alert("not found any shortcuts for this site: " + site)
@@ -382,75 +448,59 @@ async function DeleteShortcut(shortcutToDelete){
   
   shortcutrsArr = presentShortcuts.data
   
-  let overridingShourtcutIndex = getIndefOfShortcut(shortcutrsArr, shortcutToDelete)
+  let indexOfShortcut = getIndexOfShortcut(shortcutrsArr, shortcutToDelete)
   
   let shortcutInfo = {}
-  if(overridingShourtcutIndex === -1){  // not found shortcut
+  if(indexOfShortcut === -1){  // not found shortcut
+
     alert("not found shortcut: " +  shortcutToDelete + ". Nothing deleted")
     return
+
   }else{  // delete shortcut
-    shortcutInfo = shortcutrsArr[overridingShourtcutIndex] 
-    shortcutrsArr.splice(overridingShourtcutIndex, 1);
+
+    shortcutInfo = shortcutrsArr[indexOfShortcut] 
+    shortcutrsArr.splice(indexOfShortcut, 1);
   }
 
-   await saveToLocalStorage(site, {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {
-    console.log(e);
-  });
+  await saveToLocalStorage(site, {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {console.log(e);});
   
   alert("deleted " + shortcutToDelete +" "+ shortcutInfo["desc"])
 
 }
 
-async function resetStorage(){
-  shortcut.set({});
-
-
-
-  await clearStorage("storage cleared").catch(e => {
-    console.log(e);
-  });
-
-  const data = {"data": [], "info": {"enabled": isExtensionEnabled}}
-  await saveToLocalStorage(getSiteUrlIdentifier(), data)
-}
 
 
 
 //// EVENT LISTENER && HANDLER //////// EVENT LISTENER && HANDLER //////// EVENT LISTENER && HANDLER ////
 //@desc: main message listener(s) and handler for extension
 
+
+// Requests listener
 chrome.runtime.onMessage.addListener(async function(request){
   
-  // temp, just to check sth
-  if(request === "show_shortcuts"){
+  // temp, just to make debuging easier
+  if(request === GET_SHORTCUTS){
     const data = await readLocalStorage(getSiteUrlIdentifier())
     alert(JSON.stringify(data))
     return
   }
-
-  if(request === 'onOff_local'){
-    onOffLocal()
-    return
+  else if(request === ON_OFF_LOCAL_MSG){
+    onOffLocal();
   }
-
-
-  if(request==="new_shortcut")
+  else if(request===CREATE_NEW_SHOWRTCUT_MSG)
   {
-    await  newShortcut().catch(e => {
-        console.log(e);
-    });
+    await  newShortcut().catch(e => {console.log(e); });
 
-  } else if(request.length >=2 && request.substr(0, 7) === "Delete_"){
+  } else if(request.length >=2 && 
+    request.substr(0, DELETE_SHORTCUTS_MSG.length + REQUEST_SEPARATOR.length) === DELETE_SHORTCUTS_MSG + REQUEST_SEPARATOR){
 
-    const shortcutToDelete = request.substr(7, request.length - 1).toLowerCase();
-    await DeleteShortcut(shortcutToDelete).catch(e => {
-        console.log(e);
-    });
+    const requestTypeLength = DELETE_SHORTCUTS_MSG.length + REQUEST_SEPARATOR.length
+    const shortcutToDelete = request.substr(requestTypeLength, request.length - 1).toLowerCase();
+
+    await DeleteShortcut(shortcutToDelete).catch(e => {console.log(e);});
    
-  }else if (request ==='RESET_FULL'){
-    await resetStorage().catch(e => {
-        console.log(e);
-    });
+  }else if (request ===CLEAR_STORAGE_MSG){
+    await resetStorage().catch(e => { console.log(e); });
   }
   else{
     alert("UNKNOWN REQUEST: " + request)
@@ -458,8 +508,8 @@ chrome.runtime.onMessage.addListener(async function(request){
 })
 
 
+//block default action
 document.onkeydown = function (e) {
-  //remove this function if you dont want to block default action
   // normalize event
   e = e || window.event;
 
@@ -475,32 +525,19 @@ document.onkeydown = function (e) {
   }
 };
 
-
+// INIT actions
 window.addEventListener('load', async (event) => {
 
   try {
-    // alert(1)
     const data = await readLocalStorage(getSiteUrlIdentifier())
-    // alert(2)
     const shortCutInfo = prepareDataToCache(data)
-    // alert(3)
-    
-    if(!data || !data.info){
-      alert("no data")
-      return
-    }
     
     isExtensionEnabled = data.info.enabled;
-    // alert(4)
-    
-    await shortcut.set(shortCutInfo)
-    //alert(5)
+    await shortcut.set(shortCutInfo);
   
   } catch (err) {
     const data = {"data": [], "info": {"enabled": true}}
     await saveToLocalStorage(getSiteUrlIdentifier(), data)
-
   }
 
 })
-
