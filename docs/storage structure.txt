@@ -1,0 +1,68 @@
+{
+	[site identifier]:
+	{
+		data: 
+		{
+			[
+				{
+					"attributes":
+					{
+						parentAttributes: (string) ,
+						orginalAtributes: (string) ,
+						others: 
+						{
+							checkInnerText: (bool),
+							innerText: (string)
+						},
+					}
+					"desc": (string),
+					"shortcut: (string),
+					"options": {  }
+				},
+				....
+			]
+		},
+		
+		info:{
+			enabled: (bool)
+		}
+	
+	
+	}
+
+}
+
+
+
+[site identifier] --	is parsed URL, by default it should be part of link after "https://"
+						for example:	"https://www.w3schools.com/jsref/jsref_obj_date.asp" -->"www.w3schools.com"
+					
+"data" -- list of shorftcuts with all neccesary info about individual shortcut
+
+"attributes" -- information about element that had beed shortcuted
+
+"parentAttributes" -- 	attributes with values from element that contains "href", its saved as stringified JSON, 
+						for example:	"{class: 'button 2' }"
+(optional) "orginalAtributes" -- attribiutes of target, but "href" wasn't found inside
+								 if element had "href", this field shouldnt exist. Attribiutes described as above
+								 
+"others" -- place to add new additional field that may increase precision of search. 								 
+
+"checkInnerText" -- determines wheter inner text will be considered during search.
+
+"inner text" -- inner text fetched from target by target.innerText()
+
+"desc" -- decription of shortcut provided by user
+
+"shortcut" -- 	key sequence in format [key]-[key]-[key]-....-[key]  where [key] is takend from "event.key",
+				after ".toLowerCase()" function. For example "shift-alt-l"
+"options" -- place to add options for inditivual shortcut, like "enabled", "delay" etc (non of them is currenlty in use)
+
+"info" -- iformation that applites for all shortcuts in site
+	"enabled" -- determiens wherther extension should run on this page
+
+
+
+
+Definitions:
+"target" -- element that user clicked on during creating shortcut
