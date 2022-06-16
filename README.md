@@ -1,5 +1,5 @@
 # shortcut-everything
-### Current version: v0.3
+### Current version: v0.4
 A chrome extension that allows you to create create shortcut and improve yout workflow!
 
 
@@ -20,13 +20,16 @@ Now every time you press that key, it should emulate clicking this button
 - [X] deleting shortcuts
 
 ### Features for v0.4
-- [ ] searching for link in parents
+- [X] searching for link in parents
 
 ### Features for v0.5
 - [ ] feedback while inserting shortcut
 
 ### Features for v0.6
 - [ ] extension page with ability to add/delete/modify shortcuts
+
+### Features for v0.7
+- [ ] alternative attributes
 
 
 ## Ideas to implement
