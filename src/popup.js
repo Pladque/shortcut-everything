@@ -5,6 +5,7 @@ const CREATE_NEW_SHOWRTCUT_MSG = "new" + REQUEST_SEPARATOR + "shortcut" // "new_
 const ON_OFF_LOCAL_MSG = "onOff" + REQUEST_SEPARATOR + "local"          // "onOff_local"
 const GET_SHORTCUTS = "show" + REQUEST_SEPARATOR + "shortcuts"          // "show_shortcuts"
 
+let insertingShortcut = false
 document.addEventListener('DOMContentLoaded', function () {
     
     document.getElementById('new_shortcut').addEventListener('click', onclick_newShortcut, false)
@@ -16,10 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     
     function onclick_newShortcut () {
-      chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, CREATE_NEW_SHOWRTCUT_MSG)
-        
-      })
+      insertingShortcut = true;
     }
   
   function onclick_showShortcuts () {
@@ -51,3 +49,54 @@ function onclick_resetStorage () {
 
 
 }, false)
+
+function getShortcut(keySequence){
+  return new Array(...keySequence).join('-').toLowerCase();
+}
+
+let keySequence = new Set()
+let keySequenceStack = []
+function getShortcutFromUser(e){
+
+  if(e.key.toLowerCase() !== "enter"){
+        if(e.key.toLowerCase() === "backspace"){
+          keySequence.delete(keySequenceStack.pop())
+        }
+        else{
+          keySequence.add(e.key.toLowerCase());
+          keySequenceStack.push(e.key.toLowerCase())
+        }
+        
+        document.getElementById("new keySequence input field").value =  getShortcut(keySequence);
+        return
+      }
+      
+      let shortcut = getShortcut(keySequence);
+      keySequence.clear()
+      keySequenceStack = []
+
+      return shortcut;
+}
+
+document.addEventListener('keydown', async (e) =>{
+  if(!insertingShortcut){
+    return
+  }
+
+  let shortcut = getShortcutFromUser(e)
+  
+  if(e.key === "Enter"){
+    if(shortcut ==="")
+    {
+      alert("Shortcut cannot be empty!")
+      return
+    }
+
+     chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, CREATE_NEW_SHOWRTCUT_MSG + REQUEST_SEPARATOR + shortcut)
+      })
+      
+    insertingShortcut = false;
+    window.close();
+  }
+})

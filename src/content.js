@@ -10,7 +10,7 @@ const CREATE_NEW_SHOWRTCUT_MSG = "new" + REQUEST_SEPARATOR + "shortcut" // "new_
 const ON_OFF_LOCAL_MSG = "onOff" + REQUEST_SEPARATOR + "local"          // "onOff_local"
 const GET_SHORTCUTS = "show" + REQUEST_SEPARATOR + "shortcuts"          // "show_shortcuts"
 
-const ATTRIBIUTES_TO_SKIP = ["href"]
+const ATTRIBIUTES_TO_SKIP = ["href", "data-hveid"]  // "data-hveid" shouldnt be there in final version :ppp
 
 //// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  ////
 //@desc: place to write code directly connecting with storage
@@ -199,10 +199,6 @@ function getIndexOfShortcut(shortcutrsArr, shortcut){
   return index
 }
 
-function getShortcut(keySequence){
-  return new Array(...keySequence).join('-').toLowerCase();
-}
-
 function getURL(){
   return window.location.href
 }
@@ -254,7 +250,7 @@ function getHrefFromElementWithProperties(elementProperties){
     let attributes_names = allElements[i].getAttributeNames();
     let check = true;
     for(let j = 0; j<attributes_names.length; j++){
-      if(attributes_names[j] === "href"){
+      if(ATTRIBIUTES_TO_SKIP.includes(attributes_names[j])){
         continue;
       }
       
@@ -263,6 +259,7 @@ function getHrefFromElementWithProperties(elementProperties){
       }
 
     }
+    
     if(allElements[i].getAttribute("href") && check && attributes_names.length>=2)
     {
       next_href = allElements[i].getAttribute("href")
@@ -351,85 +348,59 @@ async function onOffLocal(){
 }
 
 
-let keySequence = new Set()
-let keySequenceStack = []
-function getShortcutFromUser(e){
-
-  if(e.key.toLowerCase() !== "enter"){
-        if(e.key.toLowerCase() === "backspace"){
-          keySequence.delete(keySequenceStack.pop())
-        }
-        else{
-          keySequence.add(e.key.toLowerCase());
-          keySequenceStack.push(e.key.toLowerCase())
-        }
-        
-        return
-      }
-      
-      let shortcut = getShortcut(keySequence);
-      keySequence.clear()
-      keySequenceStack = []
-
-      return shortcut;
-}
-
-
-async function newShortcut(){
+async function newShortcut(shortcut){
   READ_ACTIVE = false;
-    document.addEventListener('keydown', async (e) =>{
+
       
-      let shortcut = getShortcutFromUser(e)
-      
-      document.body.addEventListener('click', async (e) => {
-        if(READ_ACTIVE || shortcut === undefined){
-          return
-        }
-        READ_ACTIVE = true;
-        
-        const elementPropertiesWithOrginal = await getButtonInfo(e).catch(e => {
-            console.log(e);
-        });
-        
-        const site = getSiteUrlIdentifier();
+  document.body.addEventListener('click', async (e) => {
+    if(READ_ACTIVE || shortcut === undefined){
+      return
+    }
+    READ_ACTIVE = true;
     
-        let presentShortcuts = null
-
-        try {
-          presentShortcuts = await readLocalStorage(site).catch(e => {
-            console.log(e);
-        });
-        } catch (error) {
-          
-        }
-
-        const description = "No description provided"
-        const shortcutInfoObj = {"shortcut": shortcut, "attributes": elementPropertiesWithOrginal, "desc": description, "options": {enabled: true  }}
-
-        if(presentShortcuts === null || presentShortcuts === undefined){
-          await saveToLocalStorage(site,  {"data": [ shortcutInfoObj ], "info": {"enabled": true} }).catch(e => {
-            console.log(e);
-          });
-        }else{
-          shortcutrsArr = presentShortcuts["data"]
-          
-          let indexOfShortcut = getIndexOfShortcut(shortcutrsArr, shortcut)
-          
-          if(indexOfShortcut === -1){  // add new shortcut
-            shortcutrsArr.push(shortcutInfoObj) 
-          }else{  // override shortcut
-            shortcutrsArr[indexOfShortcut] = shortcutInfoObj
-          }
-
-          await saveToLocalStorage(site,  {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {
-              console.log(e);
-            });
-          }
-
-          shortcut = ""
-      }
-      , true)
+    const elementPropertiesWithOrginal = await getButtonInfo(e).catch(e => {
+        console.log(e);
     });
+    
+    const site = getSiteUrlIdentifier();
+
+    let presentShortcuts = null
+
+    try {
+      presentShortcuts = await readLocalStorage(site).catch(e => {
+        console.log(e);
+    });
+    } catch (error) {
+      
+    }
+
+    const description = "No description provided"
+    const shortcutInfoObj = {"shortcut": shortcut, "attributes": elementPropertiesWithOrginal, "desc": description, "options": {enabled: true  }}
+
+    if(presentShortcuts === null || presentShortcuts === undefined){
+      await saveToLocalStorage(site,  {"data": [ shortcutInfoObj ], "info": {"enabled": true} }).catch(e => {
+        console.log(e);
+      });
+    }else{
+      shortcutrsArr = presentShortcuts["data"]
+      
+      let indexOfShortcut = getIndexOfShortcut(shortcutrsArr, shortcut)
+      
+      if(indexOfShortcut === -1){  // add new shortcut
+        shortcutrsArr.push(shortcutInfoObj) 
+      }else{  // override shortcut
+        shortcutrsArr[indexOfShortcut] = shortcutInfoObj
+      }
+
+      await saveToLocalStorage(site,  {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {
+          console.log(e);
+        });
+      }
+
+      shortcut = ""
+  }
+  , true)
+
 }
 
 
@@ -487,9 +458,11 @@ chrome.runtime.onMessage.addListener(async function(request){
   else if(request === ON_OFF_LOCAL_MSG){
     onOffLocal();
   }
-  else if(request===CREATE_NEW_SHOWRTCUT_MSG)
+  else if(request.substr(0, CREATE_NEW_SHOWRTCUT_MSG.length) === CREATE_NEW_SHOWRTCUT_MSG)
   {
-    await  newShortcut().catch(e => {console.log(e); });
+    const shortcutStartInd = CREATE_NEW_SHOWRTCUT_MSG.length + REQUEST_SEPARATOR.length
+    const shortcut = request.substr(shortcutStartInd,request.length-1)
+    await  newShortcut(shortcut).catch(e => {console.log(e); });
 
   } else if(request.length >=2 && 
     request.substr(0, DELETE_SHORTCUTS_MSG.length + REQUEST_SEPARATOR.length) === DELETE_SHORTCUTS_MSG + REQUEST_SEPARATOR){
