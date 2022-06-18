@@ -5,8 +5,8 @@ A chrome extension that allows you to create create shortcut and improve yout wo
 
 
 ### How to use
-Click extension icon in your browser, then "add new shortcut", insert your keyboard shortcut (only 1 key for now), click something you want to be 'shortcutted'.
-Now every time you press that key, it should emulate clicking this button
+Click extension icon in your browser, then "add new shortcut", insert key sequence and commit with ENTER, click something you want to be 'shortcutted'.
+Now every time you press that key sequence, it should emulate clicking this button
 
 
 ## Incomming features:
