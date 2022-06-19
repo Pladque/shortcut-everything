@@ -107,10 +107,14 @@ var shortcut = {
 
     // (A2) KEY PRESS LISTENERS
     window.addEventListener('keydown', (evt) => {
-      shortcut.track(evt.key.toLowerCase(), true);
+      if (evt.key){
+        shortcut.track(evt.key.toLowerCase(), true);
+      }
     });
     window.addEventListener('keyup', (evt) => {
-      shortcut.track(evt.key.toLowerCase(), false);
+      if (evt.key){
+        shortcut.track(evt.key.toLowerCase(), false);
+      }
     });
   },
 
