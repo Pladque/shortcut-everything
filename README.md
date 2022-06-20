@@ -1,5 +1,5 @@
 # shortcut-everything
-### Current version: v0.4
+### Current version: v0.5
 A chrome extension that allows you to create create shortcut and improve yout workflow!
 
 
@@ -23,7 +23,7 @@ Now every time you press that key sequence, it should emulate clicking this butt
 - [X] searching for link in parents
 
 ### Features for v0.5
-- [ ] feedback while inserting shortcut
+- [X] feedback while inserting shortcut
 
 ### Features for v0.6
 - [ ] extension page with ability to add/delete/modify shortcuts
