@@ -111,6 +111,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('new_shortcut').addEventListener('click', onclick_newShortcut, false)
     document.getElementById('on/off button local').addEventListener('click', onclick_onOffLocal, false)
     document.getElementById('reset storage').addEventListener('click', onclick_resetStorage, false)
+    document.getElementById('show shortcuts raw').addEventListener('click', onclick_showShortcuts, false)
     document.getElementById('delete shortcut submit').addEventListener('click', function() { 
       onclick_deleteShortcut(document.getElementById('shortcut input field'));
     });
@@ -127,16 +128,23 @@ document.addEventListener('DOMContentLoaded', function () {
         chrome.tabs.sendMessage(tabs[0].id, ON_OFF_LOCAL_MSG)
         
     })
-}
+  }
+
+  function onclick_showShortcuts () {
+    chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, GET_SHORTCUTS)
+        
+    })
+  }
 
   
 
-function onclick_resetStorage () {
-  chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, CLEAR_STORAGE_MSG)
-      
-  })
-}
+  function onclick_resetStorage () {
+    chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, CLEAR_STORAGE_MSG)
+        
+    })
+  }
 
 
 }, false)
@@ -165,7 +173,6 @@ function getShortcutFromUser(e){
       let shortcut = getShortcut(keySequence);
       keySequence.clear()
       keySequenceStack = []
-
       return shortcut;
 }
 

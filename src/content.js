@@ -7,7 +7,7 @@ const REQUEST_SEPARATOR = "_";
 const DELETE_SHORTCUTS_MSG = "Delete";
 const CLEAR_STORAGE_MSG = "RESET" + REQUEST_SEPARATOR + "FULL"          // "RESET_FULL"
 const CREATE_NEW_SHOWRTCUT_MSG = "new" + REQUEST_SEPARATOR + "shortcut" // "new_shortcut"
-const ON_OFF_LOCAL_MSG = "onOff" + REQUEST_SEPARATOR + "local"          // "onOff_local"
+const ON_OFF_LOCAL_MSG = "onOfalertf" + REQUEST_SEPARATOR + "local"          // "onOff_local"
 const GET_SHORTCUTS = "show" + REQUEST_SEPARATOR + "shortcuts"          // "show_shortcuts"
 
 const ATTRIBIUTES_TO_SKIP = ["href", "data-hveid"]  // "data-hveid" shouldnt be there in final version :ppp
@@ -66,6 +66,7 @@ function prepareDataToCache(data){
     shortCutInfo[data.data[i].shortcut] = () => {
       if(isExtensionEnabled){
         const savedShortCut = data.data[i].attributes
+        // alert(savedShortCut)
         if(savedShortCut && READ_ACTIVE){
           
           const next_href = getHrefFromElementWithProperties(savedShortCut) 
@@ -249,6 +250,8 @@ function getHrefFromElementWithProperties(elementProperties){
   const innerText = elementProperties.others.innerText
   const checkInnerText = elementProperties.others.checkInnerText
 
+  let TEMP;  
+
   let next_href = "null"
   for(let i =0; i<allElements.length; i++){
     let attributes_names = allElements[i].getAttributeNames();
@@ -267,23 +270,28 @@ function getHrefFromElementWithProperties(elementProperties){
     if(allElements[i].getAttribute("href") && check && attributes_names.length>=2)
     {
       next_href = allElements[i].getAttribute("href")
+      TEMP = allElements[i]
       if(elementProperties.orginalTargetAttributes){
         let OrginalTargetAChild = getChild(allElements[i], elementProperties.orginalTargetAttributes)
 
         if(OrginalTargetAChild !== null){
           if(OrginalTargetAChild.innerText === innerText || checkInnerText===false){
+            // alert(123)
+            OrginalTargetAChild.click()
             return next_href
           }
         }
-
+        
       }else{
         break;
       }
     }
   }
-
-
-  return next_href
+  
+  
+  // alert(123)
+  TEMP.click()
+  return null
 }
 
 function createArrFromAttribiutes(target){
@@ -351,15 +359,20 @@ async function onOffLocal(){
 
 }
 
-
+// global value to save somewhere entered shortcut
+globalShortcut = "none"
 async function newShortcut(shortcut){
   READ_ACTIVE = false;
 
       
+  globalShortcut = shortcut  
   document.body.addEventListener('click', async (e) => {
     if(READ_ACTIVE || shortcut === undefined){
       return
     }
+    shortcut = globalShortcut
+
+    
     READ_ACTIVE = true;
     
     const elementPropertiesWithOrginal = await getButtonInfo(e).catch(e => {
@@ -380,6 +393,8 @@ async function newShortcut(shortcut){
 
     const description = "No description provided"
     const shortcutInfoObj = {"shortcut": shortcut, "attributes": elementPropertiesWithOrginal, "desc": description, "options": {enabled: true  }}
+
+    alert(JSON.stringify(shortcutInfoObj))
 
     if(presentShortcuts === null || presentShortcuts === undefined){
       await saveToLocalStorage(site,  {"data": [ shortcutInfoObj ], "info": {"enabled": true} }).catch(e => {
@@ -466,6 +481,7 @@ chrome.runtime.onMessage.addListener(async function(request){
   {
     const shortcutStartInd = CREATE_NEW_SHOWRTCUT_MSG.length + REQUEST_SEPARATOR.length
     const shortcut = request.substr(shortcutStartInd,request.length-1)
+    alert(shortcut)
     await  newShortcut(shortcut).catch(e => {console.log(e); });
 
   } else if(request.length >=2 && 
@@ -518,3 +534,6 @@ window.addEventListener('load', async (event) => {
   }
 
 })
+
+// TODOOO
+//  /// ZAMIEN SZUKANIE HREFA NA CLICK  XDDD
