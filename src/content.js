@@ -10,7 +10,7 @@ const CREATE_NEW_SHOWRTCUT_MSG = "new" + REQUEST_SEPARATOR + "shortcut" // "new_
 const ON_OFF_LOCAL_MSG = "onOff" + REQUEST_SEPARATOR + "local"          // "onOff_local"
 const GET_SHORTCUTS = "show" + REQUEST_SEPARATOR + "shortcuts"          // "show_shortcuts"
 
-const ATTRIBIUTES_TO_SKIP = ["href"]
+const ATTRIBIUTES_TO_SKIP = ["href", "data-hveid"]  // "data-hveid" shouldnt be there in final version :ppp
 
 //// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  ////
 //@desc: place to write code directly connecting with storage
@@ -66,14 +66,16 @@ function prepareDataToCache(data){
     shortCutInfo[data.data[i].shortcut] = () => {
       if(isExtensionEnabled){
         const savedShortCut = data.data[i].attributes
+        // alert(savedShortCut)
         if(savedShortCut && READ_ACTIVE){
           
-          const next_href = getHrefFromElementWithProperties(savedShortCut) 
-          if(next_href === "null"){
+          const elem = getElementWithProperties(savedShortCut) 
+          if(elem === null){
             alert("ERROR, cannot find href in element")
           }
           else{
-            goToHref(next_href)
+            elem.click();
+            // goToHref(next_href)
           }
     
         }
@@ -107,10 +109,14 @@ var shortcut = {
 
     // (A2) KEY PRESS LISTENERS
     window.addEventListener('keydown', (evt) => {
-      shortcut.track(evt.key.toLowerCase(), true);
+      if (evt.key){
+        shortcut.track(evt.key.toLowerCase(), true);
+      }
     });
     window.addEventListener('keyup', (evt) => {
-      shortcut.track(evt.key.toLowerCase(), false);
+      if (evt.key){
+        shortcut.track(evt.key.toLowerCase(), false);
+      }
     });
   },
 
@@ -199,10 +205,6 @@ function getIndexOfShortcut(shortcutrsArr, shortcut){
   return index
 }
 
-function getShortcut(keySequence){
-  return new Array(...keySequence).join('-').toLowerCase();
-}
-
 function getURL(){
   return window.location.href
 }
@@ -243,18 +245,23 @@ function getChild(parent, childWannaBe){
 //        currently open webpage
 // @INPUT: properties in JSON format as a string
 // @RETURNS: href that matches element with given properties or string "null" if not found   
-function getHrefFromElementWithProperties(elementProperties){
+function getElementWithProperties(elementProperties){
   const allElements = document.body.getElementsByTagName("*");
   const elementPropertiesJSON = JSON.parse(elementProperties.parentAttributes);
   const innerText = elementProperties.others.innerText
   const checkInnerText = elementProperties.others.checkInnerText
 
+  let TEMP = null;  
+
   let next_href = "null"
   for(let i =0; i<allElements.length; i++){
     let attributes_names = allElements[i].getAttributeNames();
     let check = true;
+    let skippedAttribiutes = 0;
+
     for(let j = 0; j<attributes_names.length; j++){
-      if(attributes_names[j] === "href"){
+      if(ATTRIBIUTES_TO_SKIP.includes(attributes_names[j])){
+        skippedAttribiutes++;
         continue;
       }
       
@@ -263,26 +270,32 @@ function getHrefFromElementWithProperties(elementProperties){
       }
 
     }
-    if(allElements[i].getAttribute("href") && check && attributes_names.length>=2)
+    
+    if( check && attributes_names.length>=skippedAttribiutes + 1)
     {
-      next_href = allElements[i].getAttribute("href")
+      // next_href = allElements[i].getAttribute("href")
+      TEMP = allElements[i]
       if(elementProperties.orginalTargetAttributes){
         let OrginalTargetAChild = getChild(allElements[i], elementProperties.orginalTargetAttributes)
 
         if(OrginalTargetAChild !== null){
           if(OrginalTargetAChild.innerText === innerText || checkInnerText===false){
-            return next_href
+            // alert(123)
+            OrginalTargetAChild.click()
+            return  OrginalTargetAChild
           }
         }
-
+        
       }else{
         break;
       }
     }
   }
-
-
-  return next_href
+  
+  
+  // alert(123)
+  // TEMP.click()
+  return  TEMP
 }
 
 function createArrFromAttribiutes(target){
@@ -310,9 +323,10 @@ async function getButtonInfo(e){
   var target = e.target || e.srcElement
   
   const orginalTarget = target
-  while(!target.hasAttribute("href")){
-    target = target.parentElement;
-  }
+
+  // while(!target.hasAttribute("href")){
+  //   target = target.parentElement;
+  // }
 
   let button_data = {}
   button_data.parentAttributes = JSON.stringify(createArrFromAttribiutes(target))
@@ -350,86 +364,67 @@ async function onOffLocal(){
 
 }
 
-
-let keySequence = new Set()
-let keySequenceStack = []
-function getShortcutFromUser(e){
-
-  if(e.key.toLowerCase() !== "enter"){
-        if(e.key.toLowerCase() === "backspace"){
-          keySequence.delete(keySequenceStack.pop())
-        }
-        else{
-          keySequence.add(e.key.toLowerCase());
-          keySequenceStack.push(e.key.toLowerCase())
-        }
-        
-        return
-      }
-      
-      let shortcut = getShortcut(keySequence);
-      keySequence.clear()
-      keySequenceStack = []
-
-      return shortcut;
-}
-
-
-async function newShortcut(){
+// global value to save somewhere entered shortcut
+globalShortcut = "none"
+async function newShortcut(shortcut){
   READ_ACTIVE = false;
-    document.addEventListener('keydown', async (e) =>{
+
       
-      let shortcut = getShortcutFromUser(e)
-      
-      document.body.addEventListener('click', async (e) => {
-        if(READ_ACTIVE || shortcut === undefined){
-          return
-        }
-        READ_ACTIVE = true;
-        
-        const elementPropertiesWithOrginal = await getButtonInfo(e).catch(e => {
-            console.log(e);
-        });
-        
-        const site = getSiteUrlIdentifier();
+  globalShortcut = shortcut  
+  document.body.addEventListener('click', async (e) => {
+    if(READ_ACTIVE || shortcut === undefined){
+      return
+    }
+    shortcut = globalShortcut
+
     
-        let presentShortcuts = null
-
-        try {
-          presentShortcuts = await readLocalStorage(site).catch(e => {
-            console.log(e);
-        });
-        } catch (error) {
-          
-        }
-
-        const description = "No description provided"
-        const shortcutInfoObj = {"shortcut": shortcut, "attributes": elementPropertiesWithOrginal, "desc": description, "options": {enabled: true  }}
-
-        if(presentShortcuts === null || presentShortcuts === undefined){
-          await saveToLocalStorage(site,  {"data": [ shortcutInfoObj ], "info": {"enabled": true} }).catch(e => {
-            console.log(e);
-          });
-        }else{
-          shortcutrsArr = presentShortcuts["data"]
-          
-          let indexOfShortcut = getIndexOfShortcut(shortcutrsArr, shortcut)
-          
-          if(indexOfShortcut === -1){  // add new shortcut
-            shortcutrsArr.push(shortcutInfoObj) 
-          }else{  // override shortcut
-            shortcutrsArr[indexOfShortcut] = shortcutInfoObj
-          }
-
-          await saveToLocalStorage(site,  {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {
-              console.log(e);
-            });
-          }
-
-          shortcut = ""
-      }
-      , true)
+    READ_ACTIVE = true;
+    
+    const elementPropertiesWithOrginal = await getButtonInfo(e).catch(e => {
+        console.log(e);
     });
+    
+    const site = getSiteUrlIdentifier();
+
+    let presentShortcuts = null
+
+    try {
+      presentShortcuts = await readLocalStorage(site).catch(e => {
+        console.log(e);
+    });
+    } catch (error) {
+      
+    }
+
+    const description = "No description provided"
+    const shortcutInfoObj = {"shortcut": shortcut, "attributes": elementPropertiesWithOrginal, "desc": description, "options": {enabled: true  }}
+
+    // alert(JSON.stringify(shortcutInfoObj))
+
+    if(presentShortcuts === null || presentShortcuts === undefined){
+      await saveToLocalStorage(site,  {"data": [ shortcutInfoObj ], "info": {"enabled": true} }).catch(e => {
+        console.log(e);
+      });
+    }else{
+      shortcutrsArr = presentShortcuts["data"]
+      
+      let indexOfShortcut = getIndexOfShortcut(shortcutrsArr, shortcut)
+      
+      if(indexOfShortcut === -1){  // add new shortcut
+        shortcutrsArr.push(shortcutInfoObj) 
+      }else{  // override shortcut
+        shortcutrsArr[indexOfShortcut] = shortcutInfoObj
+      }
+
+      await saveToLocalStorage(site,  {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {
+          console.log(e);
+        });
+      }
+
+      shortcut = ""
+  }
+  , true)
+
 }
 
 
@@ -487,9 +482,12 @@ chrome.runtime.onMessage.addListener(async function(request){
   else if(request === ON_OFF_LOCAL_MSG){
     onOffLocal();
   }
-  else if(request===CREATE_NEW_SHOWRTCUT_MSG)
+  else if(request.substr(0, CREATE_NEW_SHOWRTCUT_MSG.length) === CREATE_NEW_SHOWRTCUT_MSG)
   {
-    await  newShortcut().catch(e => {console.log(e); });
+    const shortcutStartInd = CREATE_NEW_SHOWRTCUT_MSG.length + REQUEST_SEPARATOR.length
+    const shortcut = request.substr(shortcutStartInd,request.length-1)
+    alert(shortcut)
+    await  newShortcut(shortcut).catch(e => {console.log(e); });
 
   } else if(request.length >=2 && 
     request.substr(0, DELETE_SHORTCUTS_MSG.length + REQUEST_SEPARATOR.length) === DELETE_SHORTCUTS_MSG + REQUEST_SEPARATOR){
@@ -541,3 +539,4 @@ window.addEventListener('load', async (event) => {
   }
 
 })
+
