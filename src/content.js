@@ -10,7 +10,7 @@ const CREATE_NEW_SHOWRTCUT_MSG = "new" + REQUEST_SEPARATOR + "shortcut" // "new_
 const ON_OFF_LOCAL_MSG = "onOff" + REQUEST_SEPARATOR + "local"          // "onOff_local"
 const GET_SHORTCUTS = "show" + REQUEST_SEPARATOR + "shortcuts"          // "show_shortcuts"
 
-const ATTRIBIUTES_TO_SKIP = ["href", "data-hveid"]  // "data-hveid" shouldnt be there in final version :ppp
+const ATTRIBIUTES_TO_SKIP = ["href"]  
 
 //// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  ////
 //@desc: place to write code directly connecting with storage
@@ -65,13 +65,13 @@ function prepareDataToCache(data){
   for(let i = 0; i < data.data.length; i++){
     shortCutInfo[data.data[i].shortcut] = () => {
       if(isExtensionEnabled){
-        const savedShortCut = data.data[i].attributes
+        const savedShortCut = data.data[i]
         // alert(savedShortCut)
         if(savedShortCut && READ_ACTIVE){
           
           const elem = getElementWithProperties(savedShortCut) 
           if(elem === null){
-            alert("ERROR, cannot find href in element")
+            alert("ERROR, cannot element")
           }
           else{
             elem.click();
@@ -181,10 +181,6 @@ function parseURL(url){
     return parsed
 }
 
-function goToHref(h){
-    window.location.href = h
-}
-
 
 //// GETs //////// GETs //////// GETs //////// GETs //////// GETs //////// GETs //////// GETs ////
 
@@ -247,13 +243,21 @@ function getChild(parent, childWannaBe){
 // @RETURNS: href that matches element with given properties or string "null" if not found   
 function getElementWithProperties(elementProperties){
   const allElements = document.body.getElementsByTagName("*");
-  const elementPropertiesJSON = JSON.parse(elementProperties.parentAttributes);
-  const innerText = elementProperties.others.innerText
-  const checkInnerText = elementProperties.others.checkInnerText
+  const elementPropertiesJSON = JSON.parse(elementProperties.attributes.parentAttributes);
+  const innerText = elementProperties.attributes.others.innerText
+  const checkInnerText = elementProperties.attributes.others.checkInnerText
 
-  let TEMP = null;  
+  let wantedElement = null;  
 
-  let next_href = "null"
+  let currentIndex = 0;
+  // alert(JSON.stringify(elementProperties))
+  let indexOfWantetElement = 0
+  if(elementProperties.options.elementIndex){
+    indexOfWantetElement = +elementProperties.options.elementIndex
+  }
+
+  
+
   for(let i =0; i<allElements.length; i++){
     let attributes_names = allElements[i].getAttributeNames();
     let check = true;
@@ -271,31 +275,37 @@ function getElementWithProperties(elementProperties){
 
     }
     
-    if( check && attributes_names.length>=skippedAttribiutes + 1)
+    if( check && attributes_names.length>= skippedAttribiutes + 1)
     {
-      // next_href = allElements[i].getAttribute("href")
-      TEMP = allElements[i]
-      if(elementProperties.orginalTargetAttributes){
-        let OrginalTargetAChild = getChild(allElements[i], elementProperties.orginalTargetAttributes)
-
-        if(OrginalTargetAChild !== null){
-          if(OrginalTargetAChild.innerText === innerText || checkInnerText===false){
-            // alert(123)
-            OrginalTargetAChild.click()
-            return  OrginalTargetAChild
-          }
-        }
+      if(allElements[i].innerText === innerText || checkInnerText===false){
         
-      }else{
-        break;
+        if(currentIndex === indexOfWantetElement){
+          wantedElement = allElements[i]
+          break;
+        }else{
+          currentIndex++;
+        }
+
       }
+
+      // if(elementProperties.orginalTargetAttributes){
+      //   let OrginalTargetAChild = getChild(allElements[i], elementProperties.orginalTargetAttributes)
+
+      //   if(OrginalTargetAChild !== null){
+      //     if(OrginalTargetAChild.innerText === innerText || checkInnerText===false){
+      //       OrginalTargetAChild.click()
+      //       return  OrginalTargetAChild
+      //     }
+      //   }
+        
+      // }else{
+      //   break;
+      // }
     }
   }
   
   
-  // alert(123)
-  // TEMP.click()
-  return  TEMP
+  return  wantedElement
 }
 
 function createArrFromAttribiutes(target){
@@ -486,7 +496,7 @@ chrome.runtime.onMessage.addListener(async function(request){
   {
     const shortcutStartInd = CREATE_NEW_SHOWRTCUT_MSG.length + REQUEST_SEPARATOR.length
     const shortcut = request.substr(shortcutStartInd,request.length-1)
-    alert(shortcut)
+    // alert(shortcut)
     await  newShortcut(shortcut).catch(e => {console.log(e); });
 
   } else if(request.length >=2 && 
