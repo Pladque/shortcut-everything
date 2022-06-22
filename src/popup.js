@@ -323,7 +323,6 @@ let improvingShortcut = false
 document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('new_shortcut').addEventListener('click', onclick_newShortcut, false)
-    document.getElementById('new double shortcut').addEventListener('click', onclick_newDoubleShortcut, false)
     document.getElementById('on/off button local').addEventListener('click', onclick_onOffLocal, false)
     document.getElementById('reset storage').addEventListener('click', onclick_resetStorage, false)
     document.getElementById('show shortcuts raw').addEventListener('click', onclick_showShortcuts, false)
