@@ -3,14 +3,18 @@
 var READ_ACTIVE = true;
 var isExtensionEnabled = true;
 
+// Request messages //// Request messages //// Request messages //
+// @WARGNIGN: any word cannot be prefix of another
 const REQUEST_SEPARATOR = "_";
 const DELETE_SHORTCUTS_MSG = "Delete";
-const CLEAR_STORAGE_MSG = "RESET" + REQUEST_SEPARATOR + "FULL"          // "RESET_FULL"
-const CREATE_NEW_SHOWRTCUT_MSG = "new" + REQUEST_SEPARATOR + "shortcut" // "new_shortcut"
-const ON_OFF_LOCAL_MSG = "onOff" + REQUEST_SEPARATOR + "local"          // "onOff_local"
-const GET_SHORTCUTS = "show" + REQUEST_SEPARATOR + "shortcuts"          // "show_shortcuts"
+const CLEAR_STORAGE_MSG = "RESET-FULL"          // "RESET-FULL"
+const CREATE_NEW_SHOWRTCUT_MSG = "new-shortcut" // "new-shortcut"
+const CREATE_NEW_DOUBLE_SHOWRTCUT_MSG = "new-double-shortcut" // "new-double-shortcut"
+const ON_OFF_LOCAL_MSG = "onOff-local"          // "onOff-local"
+const GET_SHORTCUTS = "show-shortcuts"          // "show-shortcuts"
 
-const ATTRIBIUTES_TO_SKIP = ["href", "data-hveid"]  // "data-hveid" shouldnt be there in final version :ppp
+const ATTRIBIUTES_TO_SKIP = ["href"]  
+const NOT_WORKING_TAGS = ["svg"]
 
 //// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  ////
 //@desc: place to write code directly connecting with storage
@@ -65,16 +69,23 @@ function prepareDataToCache(data){
   for(let i = 0; i < data.data.length; i++){
     shortCutInfo[data.data[i].shortcut] = () => {
       if(isExtensionEnabled){
-        const savedShortCut = data.data[i].attributes
+        const savedShortCut = data.data[i]
         // alert(savedShortCut)
         if(savedShortCut && READ_ACTIVE){
-          
           const elem = getElementWithProperties(savedShortCut) 
+          // alert(elem)
           if(elem === null){
-            alert("ERROR, cannot find href in element")
+            alert("ERROR, cannot element")
           }
           else{
-            elem.click();
+            // alert(elem.tagName)
+            try {
+              elem.click();
+            } catch (error) {
+              alert("Ups, something went wrong")
+              alert("Try add " + elem.tagName + " to NOT_WORKING_TAGS in config file (remember to delete this shortcut and add again)")
+            }
+            // elem.dispatchEvent(new Event('click'));
             // goToHref(next_href)
           }
     
@@ -181,8 +192,33 @@ function parseURL(url){
     return parsed
 }
 
-function goToHref(h){
-    window.location.href = h
+function getJSONfieldNames(jsonObject){
+  fieldNames = []
+  for (key in jsonObject) {
+    if (jsonObject.hasOwnProperty(key)) {
+       fieldNames.push(key);
+    }
+  }
+
+  return fieldNames
+
+}
+
+// returns inner text that belong only to given element, excludes children innerTexts
+function onlyElementInnerText(el){
+  child = el.firstChild,
+  texts = [];
+
+  while (child) {
+      if (child.nodeType == 3) {
+          texts.push(child.data);
+      }
+      child = child.nextSibling;
+  }
+
+  var text = texts.join("");
+
+  return text
 }
 
 
@@ -247,15 +283,25 @@ function getChild(parent, childWannaBe){
 // @RETURNS: href that matches element with given properties or string "null" if not found   
 function getElementWithProperties(elementProperties){
   const allElements = document.body.getElementsByTagName("*");
-  const elementPropertiesJSON = JSON.parse(elementProperties.parentAttributes);
-  const innerText = elementProperties.others.innerText
-  const checkInnerText = elementProperties.others.checkInnerText
+  let elementPropertiesJSON = {}
+  elementPropertiesJSON = JSON.parse(elementProperties.attributes.targetAttributes);
 
-  let TEMP = null;  
 
-  let next_href = "null"
+  const innerText = elementProperties.attributes.others.innerText
+  const checkInnerText = elementProperties.attributes.others.checkInnerText
+
+  let wantedElement = null;  
+
+  let currentIndex = 0;
+  // alert(JSON.stringify(elementProperties))
+  let indexOfWantetElement = 0
+  if(elementProperties.options.elementIndex){
+    indexOfWantetElement = +elementProperties.options.elementIndex
+  }
+
+  
+  const attributes_names = getJSONfieldNames(elementPropertiesJSON)
   for(let i =0; i<allElements.length; i++){
-    let attributes_names = allElements[i].getAttributeNames();
     let check = true;
     let skippedAttribiutes = 0;
 
@@ -270,32 +316,25 @@ function getElementWithProperties(elementProperties){
       }
 
     }
-    
-    if( check && attributes_names.length>=skippedAttribiutes + 1)
+                // this sec constition doesnt make sens
+    if( check && attributes_names.length >= skippedAttribiutes)
     {
-      // next_href = allElements[i].getAttribute("href")
-      TEMP = allElements[i]
-      if(elementProperties.orginalTargetAttributes){
-        let OrginalTargetAChild = getChild(allElements[i], elementProperties.orginalTargetAttributes)
-
-        if(OrginalTargetAChild !== null){
-          if(OrginalTargetAChild.innerText === innerText || checkInnerText===false){
-            // alert(123)
-            OrginalTargetAChild.click()
-            return  OrginalTargetAChild
-          }
+      if(onlyElementInnerText(allElements[i]) === innerText || checkInnerText===false){
+        if(currentIndex === indexOfWantetElement){
+          
+          wantedElement = allElements[i]
+          break;
+        }else{
+          currentIndex++;
         }
-        
-      }else{
-        break;
+
       }
+
     }
   }
   
   
-  // alert(123)
-  // TEMP.click()
-  return  TEMP
+  return  wantedElement
 }
 
 function createArrFromAttribiutes(target){
@@ -323,20 +362,19 @@ async function getButtonInfo(e){
   var target = e.target || e.srcElement
   
   const orginalTarget = target
-
-  // while(!target.hasAttribute("href")){
-  //   target = target.parentElement;
-  // }
-
-  let button_data = {}
-  button_data.parentAttributes = JSON.stringify(createArrFromAttribiutes(target))
-
-  if(target !== orginalTarget){
-    button_data.orginalTargetAttributes = JSON.stringify(createArrFromAttribiutes(orginalTarget))
+  while(NOT_WORKING_TAGS.includes(target.tagName)){
+    target = target.parentElement;
   }
 
-  button_data.others = {checkInnerText: true}
-  button_data.others.innerText = orginalTarget.innerText
+  let button_data = {}
+  button_data.targetAttributes = JSON.stringify(createArrFromAttribiutes(target))
+
+  // if(target !== orginalTarget){
+  //   button_data.orginalTargetAttributes = JSON.stringify(createArrFromAttribiutes(orginalTarget))
+  // }
+
+  button_data.others = {checkInnerText: false}
+  button_data.others.innerText = onlyElementInnerText(orginalTarget)
 
   return button_data
 
@@ -428,6 +466,96 @@ async function newShortcut(shortcut){
 }
 
 
+async function improveShortcut(shortcut){
+  READ_ACTIVE = false;
+
+      
+  globalShortcut = shortcut  
+  document.body.addEventListener('click', async (e) => {
+    if(READ_ACTIVE || shortcut === undefined){
+      return
+    }
+    shortcut = globalShortcut
+
+    
+    READ_ACTIVE = true;
+    
+    const elementPropertiesWithOrginal = await getButtonInfo(e).catch(e => {
+        console.log(e);
+    });
+    
+    const site = getSiteUrlIdentifier();
+
+    let presentShortcuts = null
+
+    try {
+      presentShortcuts = await readLocalStorage(site).catch(e => {
+        console.log(e);
+    });
+    } catch (error) {
+      
+    }
+
+    const description = "No description provided"
+    const shortcutInfoObj = {"shortcut": shortcut, "attributes": elementPropertiesWithOrginal, "desc": description, "options": {enabled: true  }}
+
+    // alert(JSON.stringify(shortcutInfoObj))
+
+    if(presentShortcuts === null || presentShortcuts === undefined){
+      alert("Something went wrong coudnt find shortcut: " + globalShortcut)
+    }else{
+      shortcutrsArr = presentShortcuts["data"]
+      
+      let indexOfShortcut = getIndexOfShortcut(shortcutrsArr, shortcut)
+      
+      if(indexOfShortcut === -1){  // coudn find suach a shortcut
+        alert("Something went wrong coudnt find shortcut: " + globalShortcut)
+      }else{  // improve shortcut
+
+        let attributesProduct = {"targetAttributes": {}, "others": {}}
+        
+        const newTargetAttribiutes = JSON.parse(elementPropertiesWithOrginal.targetAttributes);
+        const oldTargetAttribiutes = JSON.parse(shortcutrsArr[indexOfShortcut].attributes.targetAttributes);
+        
+        for (const [key, value] of Object.entries(oldTargetAttribiutes)) {
+          // console.error(`${key}: ${value}`);
+          // console.error((newTargetAttribiutes)[key])
+          // console.error((oldTargetAttribiutes)[key])
+
+          if(newTargetAttribiutes[key] === oldTargetAttribiutes[key]){
+            attributesProduct.targetAttributes[key] = newTargetAttribiutes[key]
+          }
+        }     
+
+        const newTargetothers = (elementPropertiesWithOrginal.others);
+        const oldTargetOthers = (shortcutrsArr[indexOfShortcut].attributes.others);
+        
+        // alert(newTargetothers)
+
+        for (const [key, value] of Object.entries(oldTargetOthers)) {
+
+          if(newTargetothers[key] === oldTargetOthers[key] || key === "checkInnerText"){
+            attributesProduct.others[key] = newTargetothers[key]
+          }
+        }     
+        
+         
+        shortcutrsArr[indexOfShortcut].attributes.targetAttributes = JSON.stringify(attributesProduct.targetAttributes)
+        // console.error(JSON.stringify(shortcutrsArr[indexOfShortcut]))
+      }
+
+      await saveToLocalStorage(site,  {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {
+          console.log(e);
+        });
+      }
+
+      shortcut = ""
+  }
+  , true)
+
+}
+
+
 async function DeleteShortcut(shortcutToDelete){
   const site = getSiteUrlIdentifier();
   let presentShortcuts = null
@@ -486,10 +614,17 @@ chrome.runtime.onMessage.addListener(async function(request){
   {
     const shortcutStartInd = CREATE_NEW_SHOWRTCUT_MSG.length + REQUEST_SEPARATOR.length
     const shortcut = request.substr(shortcutStartInd,request.length-1)
-    alert(shortcut)
+    // alert(shortcut)
     await  newShortcut(shortcut).catch(e => {console.log(e); });
 
-  } else if(request.length >=2 && 
+  }else if(request.length >=2 && 
+    request.substr(0, CREATE_NEW_DOUBLE_SHOWRTCUT_MSG.length) === CREATE_NEW_DOUBLE_SHOWRTCUT_MSG){
+
+      const shortcutToImprove = request.split(REQUEST_SEPARATOR)[1]
+      // alert(shortcutToImprove)
+      improveShortcut(shortcutToImprove)
+  } 
+  else if(request.length >=2 && 
     request.substr(0, DELETE_SHORTCUTS_MSG.length + REQUEST_SEPARATOR.length) === DELETE_SHORTCUTS_MSG + REQUEST_SEPARATOR){
 
     const requestTypeLength = DELETE_SHORTCUTS_MSG.length + REQUEST_SEPARATOR.length

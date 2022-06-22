@@ -7,8 +7,8 @@
 				{
 					"attributes":
 					{
-						parentAttributes: (string) ,
-						orginalAtributes: (string) ,
+						targetAttributes: (string) ,
+
 						others: 
 						{
 							checkInnerText: (bool),
@@ -17,7 +17,11 @@
 					}
 					"desc": (string),
 					"shortcut: (string),
-					"options": {  }
+					"options": { 
+						enabled: (bool),
+						elementIndex: (int),
+						
+						}
 				},
 				....
 			]
@@ -41,10 +45,8 @@
 
 "attributes" -- information about element that had beed shortcuted
 
-"parentAttributes" -- 	attributes with values from element that contains "href", its saved as stringified JSON, 
+"parentAttributes" -- 	attributes with values from element. If element is not clickable (doesnt have .click() func) it will be the nearest parent that is "clickable"
 						for example:	"{class: 'button 2' }"
-(optional) "orginalAtributes" -- attribiutes of target, but "href" wasn't found inside
-								 if element had "href", this field shouldnt exist. Attribiutes described as above
 								 
 "others" -- place to add new additional field that may increase precision of search. 								 
 
@@ -57,6 +59,8 @@
 "shortcut" -- 	key sequence in format [key]-[key]-[key]-....-[key]  where [key] is takend from "event.key",
 				after ".toLowerCase()" function. For example "shift-alt-l"
 "options" -- place to add options for inditivual shortcut, like "enabled", "delay" etc (non of them is currenlty in use)
+
+"elementIndex" -- 	if there are N similar elements, and you want Kth element to be shortcuted, then you should change elementIndex to k to make it work
 
 "info" -- iformation that applites for all shortcuts in site
 	"enabled" -- determiens wherther extension should run on this page
