@@ -12,6 +12,7 @@ const CREATE_NEW_SHOWRTCUT_MSG = "new-shortcut" // "new-shortcut"
 const CREATE_NEW_DOUBLE_SHOWRTCUT_MSG = "new-double-shortcut" // "new-double-shortcut"
 const ON_OFF_LOCAL_MSG = "onOff-local"          // "onOff-local"
 const GET_SHORTCUTS = "show-shortcuts"          // "show-shortcuts"
+const UPDATE_CACHE = "update-cache"
 
 const ATTRIBIUTES_TO_SKIP = ["href"]  
 const NOT_WORKING_TAGS = ["svg", "ellipse", "path"]
@@ -111,6 +112,21 @@ async function resetStorage(){
 
   const data = {"data": [], "info": {"enabled": isExtensionEnabled}}
   await saveToLocalStorage(getSiteUrlIdentifier(), data)
+}
+
+async function updateCache(){
+   try {
+    const data = await readLocalStorage(getSiteUrlIdentifier())
+    const shortCutInfo = prepareDataToCache(data)
+    
+    isExtensionEnabled = data.info.enabled;
+    await shortcut.set(shortCutInfo);
+  
+  } catch (err) {
+    const data = {"data": [], "info": {"enabled": true}}
+    await saveToLocalStorage(getSiteUrlIdentifier(), data)
+  }
+
 }
 
 
@@ -230,6 +246,10 @@ function onlyElementInnerText(el){
   var text = texts.join("");
 
   return text
+}
+
+function matchRequest(request, msg){
+  return request.substr(0, msg.length) === msg
 }
 
 
@@ -529,9 +549,9 @@ async function improveShortcut(shortcut){
         const oldTargetAttribiutes = JSON.parse(shortcutrsArr[indexOfShortcut].attributes.targetAttributes);
         
         for (const [key, value] of Object.entries(oldTargetAttribiutes)) {
-          console.error(`${key}: ${value}`);
-          console.error((newTargetAttribiutes)[key])
-          console.error((oldTargetAttribiutes)[key])
+          // console.error(`${key}: ${value}`);
+          // console.error((newTargetAttribiutes)[key])
+          // console.error((oldTargetAttribiutes)[key])
 
           if(newTargetAttribiutes[key] === oldTargetAttribiutes[key]){
             attributesProduct.targetAttributes[key] = newTargetAttribiutes[key]
@@ -612,38 +632,36 @@ async function DeleteShortcut(shortcutToDelete){
 // Requests listener
 chrome.runtime.onMessage.addListener(async function(request){
   // temp, just to make debuging easier
-  if(request === GET_SHORTCUTS){
+  if(matchRequest(request, GET_SHORTCUTS) ){
     const data = await readLocalStorage(getSiteUrlIdentifier())
     alert(JSON.stringify(data))
     return
   }
-  else if(request === ON_OFF_LOCAL_MSG){
+  else if(matchRequest(request, ON_OFF_LOCAL_MSG) ){
     onOffLocal();
   }
-  else if(request.substr(0, CREATE_NEW_SHOWRTCUT_MSG.length) === CREATE_NEW_SHOWRTCUT_MSG)
+  else if(matchRequest(request, CREATE_NEW_SHOWRTCUT_MSG) )
   {
     const shortcutStartInd = CREATE_NEW_SHOWRTCUT_MSG.length + REQUEST_SEPARATOR.length
     const shortcut = request.substr(shortcutStartInd,request.length-1)
     // alert(shortcut)
     await  newShortcut(shortcut).catch(e => {console.log(e); });
 
-  }else if(request.length >=2 && 
-    request.substr(0, CREATE_NEW_DOUBLE_SHOWRTCUT_MSG.length) === CREATE_NEW_DOUBLE_SHOWRTCUT_MSG){
-
+  }else if( matchRequest(request, CREATE_NEW_DOUBLE_SHOWRTCUT_MSG)){
       const shortcutToImprove = request.split(REQUEST_SEPARATOR)[1]
-      // alert(shortcutToImprove)
       improveShortcut(shortcutToImprove)
   } 
-  else if(request.length >=2 && 
-    request.substr(0, DELETE_SHORTCUTS_MSG.length + REQUEST_SEPARATOR.length) === DELETE_SHORTCUTS_MSG + REQUEST_SEPARATOR){
+  else if( matchRequest(request, DELETE_SHORTCUTS_MSG)){
 
     const requestTypeLength = DELETE_SHORTCUTS_MSG.length + REQUEST_SEPARATOR.length
     const shortcutToDelete = request.substr(requestTypeLength, request.length - 1).toLowerCase();
 
     await DeleteShortcut(shortcutToDelete).catch(e => {console.log(e);});
    
-  }else if (request ===CLEAR_STORAGE_MSG){
+  }else if (matchRequest(request, CLEAR_STORAGE_MSG)){
     await resetStorage().catch(e => { console.log(e); });
+  }else if (matchRequest(request, UPDATE_CACHE)){
+    updateCache();
   }
   else{
     alert("UNKNOWN REQUEST: " + request)
@@ -651,37 +669,27 @@ chrome.runtime.onMessage.addListener(async function(request){
 })
 
 
-//block default action
-document.onkeydown = function (e) {
-  // normalize event
-  e = e || window.event;
+// //block default action
+// document.onkeydown = function (e) {
+//   // normalize event
+//   e = e || window.event;
 
-  // detecting multiple keys, e.g: Ctrl + shift + k and block default action (in edge it duplicates tab)
-  if (e.ctrlKey && !e.altKey && e.shiftKey && e.keyCode === 75) {
-    //75 means k [*]
-    // prevent default action
-    if (e.preventDefault) {
-      e.preventDefault();
-    }
-    // IEalert
-    e.returnValue = false;
-  }
-};
+//   // detecting multiple keys, e.g: Ctrl + shift + k and block default action (in edge it duplicates tab)
+//   if (e.ctrlKey && !e.altKey && e.shiftKey && e.keyCode === 75) {
+//     //75 means k [*]
+//     // prevent default action
+//     if (e.preventDefault) {
+//       e.preventDefault();
+//     }
+//     // IEalert
+//     e.returnValue = false;
+//   }
+// };
 
 // INIT actions
 window.addEventListener('load', async (event) => {
-
-  try {
-    const data = await readLocalStorage(getSiteUrlIdentifier())
-    const shortCutInfo = prepareDataToCache(data)
-    
-    isExtensionEnabled = data.info.enabled;
-    await shortcut.set(shortCutInfo);
-  
-  } catch (err) {
-    const data = {"data": [], "info": {"enabled": true}}
-    await saveToLocalStorage(getSiteUrlIdentifier(), data)
-  }
+  updateCache()
+ 
 
 })
 

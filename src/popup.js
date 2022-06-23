@@ -7,6 +7,7 @@ const CREATE_NEW_SHOWRTCUT_MSG = "new-shortcut" // "new-shortcut"
 const CREATE_NEW_DOUBLE_SHOWRTCUT_MSG = "new-double-shortcut" // "new-double-shortcut"
 const ON_OFF_LOCAL_MSG = "onOff-local"          // "onOff-local"
 const GET_SHORTCUTS = "show-shortcuts"          // "show-shortcuts"
+const UPDATE_CACHE = "update-cache"
 
 
 // STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///
@@ -76,6 +77,13 @@ function getShortcutFromUser(e){
 
 function getShortcut(keySequence){
   return new Array(...keySequence).join('-').toLowerCase();
+}
+
+function sendMessageToContent(msg){
+  chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
+      chrome.tabs.sendMessage(tabs[0].id, msg)
+      
+  })
 }
 
 
@@ -193,39 +201,29 @@ function onclick_newShortcut () {
 }
 
 function onclick_onOffLocal () {
-  chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, ON_OFF_LOCAL_MSG)
-      
-  })
+  sendMessageToContent(ON_OFF_LOCAL_MSG)
 }
 
 function onclick_showShortcuts () {
-  chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, GET_SHORTCUTS)
-      
-  })
+  sendMessageToContent(GET_SHORTCUTS)
 }
 
 function onclick_newDoubleShortcut (shortcut) {
+  sendMessageToContent( CREATE_NEW_DOUBLE_SHOWRTCUT_MSG + REQUEST_SEPARATOR + shortcut)
+
   showMessage("now click on element you want to be shortcutted better")
-  chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, CREATE_NEW_DOUBLE_SHOWRTCUT_MSG + REQUEST_SEPARATOR + shortcut)
-      
-  })
+  
 }
 
 function onclick_resetStorage () {
-  chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, CLEAR_STORAGE_MSG)
-      
-  })
+  sendMessageToContent(CLEAR_STORAGE_MSG)
+
 }
 
 
 function onclick_deleteShortcut (shortcut) {
-  chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, DELETE_SHORTCUTS_MSG + REQUEST_SEPARATOR + shortcut)
-  })
+  sendMessageToContent(DELETE_SHORTCUTS_MSG + REQUEST_SEPARATOR + shortcut)
+  sendMessageToContent(UPDATE_CACHE)
 }
 
 // TODO:  onclick_updateDesc, onclick_changeIndex, onclick_checkInnertext are nearly the same
@@ -285,6 +283,8 @@ async function onclick_changeIndex(shortcut, ind){
 
   })
 
+  sendMessageToContent(UPDATE_CACHE)
+
 }
 
 async function onclick_checkInnertext (shortcut) {
@@ -313,6 +313,8 @@ async function onclick_checkInnertext (shortcut) {
     }
     
   })
+
+  sendMessageToContent(UPDATE_CACHE)
     
 }
 
@@ -369,3 +371,16 @@ window.addEventListener('load', async (event) => {
 
 
 
+// niech innerText zostanie zignroowany jesli nie zostanie znaleziony elemetn z tym txt
+//    niech to sie samo ustawi, ze od teraz dl ateog skroru ma byc ignorowany innerTxt
+//    ale niech bedzie jakas global vlaue (z configa) co ten feature bedzie mogla wylaczyc
+
+// nowy tym shortcuta --- imput -- szukanie pola z inputem, np na yt
+
+// zeby cachowalo sie wszystko samo od razu
+
+// skroty z custom wejsciem, np. "p-1" oznacza ze chcemy wziac indeks 0, "p-2", ze indeks 2 itd
+//    to powinno dzialac kiedy sa podobne rzeczy na stronie i chcemy latwo po nich przechodzic
+
+
+// shortcut do wloczania/wylaczania rozszerzenia
