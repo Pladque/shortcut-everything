@@ -14,7 +14,8 @@ const ON_OFF_LOCAL_MSG = "onOff-local"          // "onOff-local"
 const GET_SHORTCUTS = "show-shortcuts"          // "show-shortcuts"
 
 const ATTRIBIUTES_TO_SKIP = ["href"]  
-const NOT_WORKING_TAGS = ["svg"]
+const NOT_WORKING_TAGS = ["svg", "ellipse", "path"]
+const TAGS_TO_SELECT = ["input"]
 
 //// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  ////
 //@desc: place to write code directly connecting with storage
@@ -81,6 +82,11 @@ function prepareDataToCache(data){
             // alert(elem.tagName)
             try {
               elem.click();
+
+              if(TAGS_TO_SELECT.includes(elem.tagName.toLowerCase())){
+                selectText(elem)
+              }
+
             } catch (error) {
               alert("Ups, something went wrong")
               alert("Try add " + elem.tagName + " to NOT_WORKING_TAGS in config file (remember to delete this shortcut and add again)")
@@ -202,6 +208,11 @@ function getJSONfieldNames(jsonObject){
 
   return fieldNames
 
+}
+
+function selectText(input) {
+  input.focus();
+  input.select();
 }
 
 // returns inner text that belong only to given element, excludes children innerTexts
@@ -373,7 +384,7 @@ async function getButtonInfo(e){
   //   button_data.orginalTargetAttributes = JSON.stringify(createArrFromAttribiutes(orginalTarget))
   // }
 
-  button_data.others = {checkInnerText: false}
+  button_data.others = {checkInnerText: true}
   button_data.others.innerText = onlyElementInnerText(orginalTarget)
 
   return button_data
@@ -518,9 +529,9 @@ async function improveShortcut(shortcut){
         const oldTargetAttribiutes = JSON.parse(shortcutrsArr[indexOfShortcut].attributes.targetAttributes);
         
         for (const [key, value] of Object.entries(oldTargetAttribiutes)) {
-          // console.error(`${key}: ${value}`);
-          // console.error((newTargetAttribiutes)[key])
-          // console.error((oldTargetAttribiutes)[key])
+          console.error(`${key}: ${value}`);
+          console.error((newTargetAttribiutes)[key])
+          console.error((oldTargetAttribiutes)[key])
 
           if(newTargetAttribiutes[key] === oldTargetAttribiutes[key]){
             attributesProduct.targetAttributes[key] = newTargetAttribiutes[key]
@@ -600,7 +611,6 @@ async function DeleteShortcut(shortcutToDelete){
 
 // Requests listener
 chrome.runtime.onMessage.addListener(async function(request){
-  
   // temp, just to make debuging easier
   if(request === GET_SHORTCUTS){
     const data = await readLocalStorage(getSiteUrlIdentifier())

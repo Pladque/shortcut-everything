@@ -369,14 +369,3 @@ window.addEventListener('load', async (event) => {
 
 
 
-// zaawansowane dodawanie --- musimy dodac skrot 2 razy, a wtyczka sama ogarnia, ktore 
-//    atrybuty ma zignorowac, powinny byc one dodane w options do zignrowania
-//    i potem ignorowane powinny byc ATTRIBIUTES_TO_SKIP + shortcut.options.ignoredAttribiutes
-
-// niech "index" podczas dodwania sie sam generuje dobry
-
-// skroty z custom wejsciem, np. "p-1" oznacza ze chcemy wziac indeks 0, "p-2", ze indeks 2 itd
-//    to powinno dzialac kiedy sa podobne rzeczy na stronie i chcemy latwo po nich przechodzic
-
-
-// shortcut do wloczania/wylaczania rozszerzenia
