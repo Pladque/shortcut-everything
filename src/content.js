@@ -2,6 +2,7 @@
 
 var READ_ACTIVE = true;
 var isExtensionEnabled = true;
+let autoCheckInnerTextChange = true;
 
 // Request messages //// Request messages //// Request messages //
 // @WARGNIGN: any word cannot be prefix of another
@@ -71,21 +72,35 @@ function prepareDataToCache(data){
   for(let i = 0; i < data.data.length; i++){
     shortCutInfo[data.data[i].shortcut] = () => {
       if(isExtensionEnabled){
+        // setInterval(function () {isExtensionEnabled = true}, 1000);
+        // isExtensionEnabled = false;
         const savedShortCut = data.data[i]
-        // alert(savedShortCut)
         if(savedShortCut && READ_ACTIVE){
-          const elem = getElementWithProperties(savedShortCut) 
-          // alert(elem)
+          let elem = getElementWithProperties(savedShortCut) 
+          if(elem === null && autoCheckInnerTextChange){
+            data.data[i].attributes.others.checkInnerText = ! data.data[i].attributes.others.checkInnerText;
+            saveToLocalStorage(getSiteUrlIdentifier(), data)
+            elem = getElementWithProperties(data.data[i]) 
+          }
+          
+          // // DEBUG
+          // alert(elem.getAttributeNames())
+          // if(elem.getAttributeNames().length >=1){
+          //   alert(elem.getAttribute(elem.getAttributeNames()[0]))
+          // }
+
+
+          ///
           if(elem === null){
             alert("ERROR, cannot element")
           }
           else{
-            // alert(elem.tagName)
+            // alert(elem.getAttributeNames())
             try {
-              elem.click();
-
               if(TAGS_TO_SELECT.includes(elem.tagName.toLowerCase())){
                 selectText(elem)
+              }else{
+                elem.click();
               }
 
             } catch (error) {
@@ -97,6 +112,8 @@ function prepareDataToCache(data){
           }
     
         }
+        // isExtensionEnabled = true;
+        // onOffLocal();
       }
     }
   }
@@ -231,6 +248,23 @@ function selectText(input) {
   input.select();
 }
 
+function triggerFocus(element) {
+    var eventType = "onfocusin" in element ? "focusin" : "focus",
+        bubbles = "onfocusin" in element,
+        event;
+
+    if ("createEvent" in document) {
+        event = document.createEvent("Event");
+        event.initEvent(eventType, bubbles, true);
+    }
+    else if ("Event" in window) {
+        event = new Event(eventType, { bubbles: bubbles, cancelable: true });
+    }
+
+    element.focus();
+    element.dispatchEvent(event);
+}
+
 // returns inner text that belong only to given element, excludes children innerTexts
 function onlyElementInnerText(el){
   child = el.firstChild,
@@ -324,31 +358,52 @@ function getElementWithProperties(elementProperties){
   let wantedElement = null;  
 
   let currentIndex = 0;
-  // alert(JSON.stringify(elementProperties))
   let indexOfWantetElement = 0
+
+
+  let maxNoMatchingFields = 0;
+  const optionsJSON =  elementProperties.options
+
+  if(optionsJSON.maxAmonutOfAttribiutesToSkip){
+    maxNoMatchingFields = optionsJSON.maxAmonutOfAttribiutesToSkip;
+    // alert(optionsJSON.maxAmonutOfAttribiutesToSkip)
+  }
+
   if(elementProperties.options.elementIndex){
     indexOfWantetElement = +elementProperties.options.elementIndex
   }
 
-  
+  const skippableAttribiutes = optionsJSON.skipableAttribiutes || [];
+
+  // alert(skippableAttribiutes)
+
   const attributes_names = getJSONfieldNames(elementPropertiesJSON)
+  let noMatchingFields = 0;
   for(let i =0; i<allElements.length; i++){
-    let check = true;
     let skippedAttribiutes = 0;
 
     for(let j = 0; j<attributes_names.length; j++){
+
       if(ATTRIBIUTES_TO_SKIP.includes(attributes_names[j])){
         skippedAttribiutes++;
         continue;
       }
-      
+
       if(allElements[i].getAttribute(attributes_names[j]) !== elementPropertiesJSON[attributes_names[j]]){
-        check = false
+        noMatchingFields++;
+      }
+
+      if(!skippableAttribiutes.includes(attributes_names[j])){
+        break;
+      }
+
+      if(noMatchingFields > maxNoMatchingFields){
+        break;
       }
 
     }
                 // this sec constition doesnt make sens
-    if( check && attributes_names.length >= skippedAttribiutes)
+    if( noMatchingFields <= maxNoMatchingFields && attributes_names.length >= skippedAttribiutes)
     {
       if(onlyElementInnerText(allElements[i]) === innerText || checkInnerText===false){
         if(currentIndex === indexOfWantetElement){
@@ -362,6 +417,8 @@ function getElementWithProperties(elementProperties){
       }
 
     }
+
+    noMatchingFields = 0;
   }
   
   
@@ -466,9 +523,16 @@ async function newShortcut(shortcut){
     }
 
     const description = "No description provided"
-    const shortcutInfoObj = {"shortcut": shortcut, "attributes": elementPropertiesWithOrginal, "desc": description, "options": {enabled: true  }}
-
-    // alert(JSON.stringify(shortcutInfoObj))
+    const shortcutInfoObj = {
+      "shortcut": shortcut, 
+      "attributes": elementPropertiesWithOrginal, 
+      "desc": description, 
+      "options": {
+        enabled: true, 
+        skipableAttribiutes:    Object.keys(JSON.parse(elementPropertiesWithOrginal.targetAttributes)),
+        maxAmonutOfAttribiutesToSkip: 0,
+      }
+    }
 
     if(presentShortcuts === null || presentShortcuts === undefined){
       await saveToLocalStorage(site,  {"data": [ shortcutInfoObj ], "info": {"enabled": true} }).catch(e => {
@@ -506,6 +570,10 @@ async function improveShortcut(shortcut){
     if(READ_ACTIVE || shortcut === undefined){
       return
     }
+    
+    
+
+    
     shortcut = globalShortcut
 
     

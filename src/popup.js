@@ -50,6 +50,8 @@ function showMessage(message){
   document.getElementById('message').innerText = message
 }
 
+
+
 /// creating shortcut /// /// creating shortcut /// /// creating shortcut /// /// creating shortcut /// 
 
 let keySequence = new Set()
@@ -100,6 +102,10 @@ async function createShortcutsBoard(tabs) {
     console.error(e);
   });
 
+  if(data === undefined || data === null){
+    return
+  }
+
   var node = document.getElementById("shortcuts collection");
 
   for(let i = 0; i< data.data.length; i++){
@@ -107,6 +113,11 @@ async function createShortcutsBoard(tabs) {
     newNode.setAttribute("style", "background-color: aliceblue;")
     newNode.setAttribute("value", data.data[i].shortcut)
     newNode.setAttribute("class", "shortcut")
+
+    let enableButton = document.createElement("BUTTON");
+    enableButton.innerText = "on/off shortcut"
+    enableButton.setAttribute("class", "enable button");
+    enableButton.setAttribute("value", data.data[i].shortcut)
 
     var y = document.createTextNode(data.data[i].shortcut)
 
@@ -133,9 +144,9 @@ async function createShortcutsBoard(tabs) {
     s.setAttribute("id", "wanted index "+ data.data[i].shortcut);
 
     if( data.data[i].options.elementIndex){
-      s.setAttribute("value", data.data[i].options.elementIndex)    // it should be from data.data[i].options....(gdzie tam dalej xd)
+      s.setAttribute("value", data.data[i].options.elementIndex)    
     }else{
-      s.setAttribute("value", 0)    // it should be from data.data[i].options....(gdzie tam dalej xd)
+      s.setAttribute("value", 0)    
     }
 
 
@@ -155,6 +166,23 @@ async function createShortcutsBoard(tabs) {
     j.setAttribute("class", "improve shortcut button");
     j.setAttribute("value", data.data[i].shortcut);
 
+    let updateKeySequenceButton = document.createElement("BUTTON");
+    updateKeySequenceButton.innerText = "update shortcut"
+    updateKeySequenceButton.setAttribute("class", "update shortcut");
+    updateKeySequenceButton.setAttribute("value", data.data[i].shortcut);
+
+    let amountOfSkipableAttribiutes = document.createElement("INPUT");
+    amountOfSkipableAttribiutes.setAttribute("value", data.data[i].options.maxAmonutOfAttribiutesToSkip || "0");
+    amountOfSkipableAttribiutes.setAttribute("type", "text");
+    amountOfSkipableAttribiutes.setAttribute("id", "max skippable attribiutes "+ data.data[i].shortcut);
+
+    let updateSkipableAttribiutesAmountButton = document.createElement("BUTTON");
+    updateSkipableAttribiutesAmountButton.innerText = "update skippable attrs amount"
+    updateSkipableAttribiutesAmountButton.setAttribute("class", "update skippable attrs amount");
+    updateSkipableAttribiutesAmountButton.setAttribute("value", data.data[i].shortcut);
+
+    
+    newNode.appendChild(enableButton)
     newNode.appendChild(y)
     newNode.appendChild(x)
     newNode.appendChild(z)
@@ -163,8 +191,15 @@ async function createShortcutsBoard(tabs) {
     newNode.appendChild(k)
     newNode.appendChild(p)
     newNode.appendChild(j)
+    newNode.appendChild(updateKeySequenceButton)
+    newNode.appendChild(amountOfSkipableAttribiutes)
+    newNode.appendChild(updateSkipableAttribiutesAmountButton)
 
     node.appendChild(newNode);
+
+    enableButton.addEventListener('click', function() {
+        onclick_enableDisableShortcut( data.data[i].shortcut)
+      }, false);
 
     t.addEventListener('click', function() {
         onclick_deleteShortcut( data.data[i].shortcut)
@@ -186,6 +221,16 @@ async function createShortcutsBoard(tabs) {
 
     j.addEventListener('click', function() {
       onclick_newDoubleShortcut( data.data[i].shortcut)
+    }, false);
+
+    updateKeySequenceButton.addEventListener('click', function() {
+      onclick_updatekeySequence( data.data[i].shortcut)
+    }, false);
+
+
+     updateSkipableAttribiutesAmountButton.addEventListener('click', function() {
+      const amountInput = document.getElementById("max skippable attribiutes "+ data.data[i].shortcut)
+      onclick_changeskippableAmount( data.data[i].shortcut, amountInput.value)
     }, false);
 
 
@@ -213,6 +258,14 @@ function onclick_newDoubleShortcut (shortcut) {
 
   showMessage("now click on element you want to be shortcutted better")
   
+}
+
+function onclick_updatekeySequence (shortcut) {
+  showMessage("TODO: update shortcut: " + shortcut)
+}
+
+function onclick_enableDisableShortcut (shortcut) {
+  showMessage("TODO: shortcut will be enabled / disabled: " + shortcut)
 }
 
 function onclick_resetStorage () {
@@ -319,6 +372,36 @@ async function onclick_checkInnertext (shortcut) {
 }
 
 
+function onclick_changeskippableAmount(shortcut, amount){
+   chrome.tabs.query({currentWindow: true, active: true}, async function (tabs) {
+    var currentTab = tabs[0]; 
+
+    const url = JSON.stringify(currentTab.url)
+    const data = await readLocalStorage(parseURL(url)).catch(e => {
+      console.error(e);
+    });
+
+    for(let i = 0; i<data.data.length; i++){
+      if(data.data[i].shortcut === shortcut){
+        data.data[i].options.maxAmonutOfAttribiutesToSkip = +amount
+        
+
+        await saveToLocalStorage(parseURL(url), data).catch(e => {
+          console.error(e);
+        });
+
+        showMessage("updated amount")
+
+        return
+      }
+    }
+
+  })
+
+  sendMessageToContent(UPDATE_CACHE)
+}
+
+
 ////// Listeners ///////// Listeners ///////// Listeners ///////// Listeners ///
 let insertingShortcut = false
 let improvingShortcut = false
@@ -371,16 +454,14 @@ window.addEventListener('load', async (event) => {
 
 
 
-// niech innerText zostanie zignroowany jesli nie zostanie znaleziony elemetn z tym txt
-//    niech to sie samo ustawi, ze od teraz dl ateog skroru ma byc ignorowany innerTxt
-//    ale niech bedzie jakas global vlaue (z configa) co ten feature bedzie mogla wylaczyc
+// enableButton zeby dzialalo oraz zeby shortcuty byly posortowane (najpierw enabled, potem disabled)
 
-// nowy tym shortcuta --- imput -- szukanie pola z inputem, np na yt
-
-// zeby cachowalo sie wszystko samo od razu
+// niech bedzie mozliwosc updata shortcuta z poziomu popupa, zeby zmienic z np. alt-h na alt-g latwo
 
 // skroty z custom wejsciem, np. "p-1" oznacza ze chcemy wziac indeks 0, "p-2", ze indeks 2 itd
 //    to powinno dzialac kiedy sa podobne rzeczy na stronie i chcemy latwo po nich przechodzic
 
+// POZWALAJ ZEBY NIE ZGADZAL SIE NP 1-2 ATRYBUTY, ZEBY DZIEKI TEMU DZIALLO NP.
+//    SEARCH BAR ZAWSZE NA YT
 
 // shortcut do wloczania/wylaczania rozszerzenia
