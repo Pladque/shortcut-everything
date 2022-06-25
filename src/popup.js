@@ -8,6 +8,7 @@ const CREATE_NEW_DOUBLE_SHOWRTCUT_MSG = "new-double-shortcut" // "new-double-sho
 const ON_OFF_LOCAL_MSG = "onOff-local"          // "onOff-local"
 const GET_SHORTCUTS = "show-shortcuts"          // "show-shortcuts"
 const UPDATE_CACHE = "update-cache"
+const ENABLE_DISABLE_SHORTCUT = "enable-disable-shortcut"
 
 
 // STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///
@@ -115,7 +116,13 @@ async function createShortcutsBoard(tabs) {
     newNode.setAttribute("class", "shortcut")
 
     let enableButton = document.createElement("BUTTON");
-    enableButton.innerText = "on/off shortcut"
+
+    if(data.data[i].options.enabled){
+      enableButton.innerText = "off"
+    }else{
+      enableButton.innerText = "on"
+    }
+    enableButton.setAttribute("shortcut-enabled", data.data[i].options.enabled)
     enableButton.setAttribute("class", "enable button");
     enableButton.setAttribute("value", data.data[i].shortcut)
 
@@ -198,8 +205,17 @@ async function createShortcutsBoard(tabs) {
     node.appendChild(newNode);
 
     enableButton.addEventListener('click', function() {
-        onclick_enableDisableShortcut( data.data[i].shortcut)
-      }, false);
+        const currState = enableButton.getAttribute("shortcut-enabled");
+        onclick_enableDisableShortcut( data.data[i].shortcut, currState);
+
+        if(currState === "true"){
+          enableButton.setAttribute("shortcut-enabled", "false");
+          enableButton.innerText = "on"
+        }else{
+          enableButton.setAttribute("shortcut-enabled", "true");
+          enableButton.innerText = "off"
+        }
+    }, false);
 
     t.addEventListener('click', function() {
         onclick_deleteShortcut( data.data[i].shortcut)
@@ -261,11 +277,18 @@ function onclick_newDoubleShortcut (shortcut) {
 }
 
 function onclick_updatekeySequence (shortcut) {
+  // sendMessageToContent(ENABLE_DISABLE_SHORTCUT)
   showMessage("TODO: update shortcut: " + shortcut)
 }
 
-function onclick_enableDisableShortcut (shortcut) {
-  showMessage("TODO: shortcut will be enabled / disabled: " + shortcut)
+function onclick_enableDisableShortcut (shortcut, currState) {
+  sendMessageToContent(ENABLE_DISABLE_SHORTCUT + REQUEST_SEPARATOR + shortcut)
+
+  if (currState === "true"){
+    showMessage("Shortcut enabled: " + "false")
+  }else{
+    showMessage("Shortcut enabled: " + "true")
+  }
 }
 
 function onclick_resetStorage () {

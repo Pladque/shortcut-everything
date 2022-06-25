@@ -14,6 +14,8 @@ const CREATE_NEW_DOUBLE_SHOWRTCUT_MSG = "new-double-shortcut" // "new-double-sho
 const ON_OFF_LOCAL_MSG = "onOff-local"          // "onOff-local"
 const GET_SHORTCUTS = "show-shortcuts"          // "show-shortcuts"
 const UPDATE_CACHE = "update-cache"
+const ENABLE_DISABLE_SHORTCUT = "enable-disable-shortcut"
+
 
 const ATTRIBIUTES_TO_SKIP = ["href"]  
 const NOT_WORKING_TAGS = ["svg", "ellipse", "path"]
@@ -67,11 +69,10 @@ async function saveToLocalStorage(name, obj){
 
 // prepares data from memory to save inside cache
 function prepareDataToCache(data){
-
   let shortCutInfo = {}
   for(let i = 0; i < data.data.length; i++){
     shortCutInfo[data.data[i].shortcut] = () => {
-      if(isExtensionEnabled){
+      if(isExtensionEnabled && data.data[i].options.enabled){
         // setInterval(function () {isExtensionEnabled = true}, 1000);
         // isExtensionEnabled = false;
         const savedShortCut = data.data[i]
@@ -265,7 +266,7 @@ function triggerFocus(element) {
     element.dispatchEvent(event);
 }
 
-// returns inner text that belong only to given element, excludes children innerTexts
+// returns inner text that belongs only to given element, excludes children innerTexts
 function onlyElementInnerText(el){
   child = el.firstChild,
   texts = [];
@@ -379,6 +380,7 @@ function getElementWithProperties(elementProperties){
 
   const attributes_names = getJSONfieldNames(elementPropertiesJSON)
   let noMatchingFields = 0;
+  let matchingElements = []
   for(let i =0; i<allElements.length; i++){
     let skippedAttribiutes = 0;
 
@@ -402,17 +404,22 @@ function getElementWithProperties(elementProperties){
       }
 
     }
-                // this sec constition doesnt make sens
+
     if( noMatchingFields <= maxNoMatchingFields && attributes_names.length >= skippedAttribiutes)
     {
       if(onlyElementInnerText(allElements[i]) === innerText || checkInnerText===false){
-        if(currentIndex === indexOfWantetElement){
+        // if(currentIndex === indexOfWantetElement){
           
-          wantedElement = allElements[i]
-          break;
-        }else{
-          currentIndex++;
-        }
+        //   wantedElement = allElements[i]
+        //   break;
+        // }else{
+        //   currentIndex++;
+        // }
+
+         matchingElements.push({
+          "noMatchingFields": noMatchingFields,
+          "element": allElements[i],
+        })
 
       }
 
@@ -420,9 +427,31 @@ function getElementWithProperties(elementProperties){
 
     noMatchingFields = 0;
   }
+
+
+  function compare( a, b ) {
+    if ( a.noMatchingFields < b.noMatchingFields ){
+      return -1;
+    }
+    if ( a.noMatchingFields > b.noMatchingFields ){
+      return 1;
+    }
+    return 0;
+  }
+
+  matchingElements.sort( compare );
+
+  // for(let i = 0; i< matchingElements.length; i++){
+  //   console.error(JSON.stringify(matchingElements[i]))
+  // }
   
+  if(matchingElements.length >=1){
+    // console.error(JSON.stringify(matchingElements[indexOfWantetElement]))
+    return  matchingElements[indexOfWantetElement].element;
+  }else{
+    return null
+  }
   
-  return  wantedElement
 }
 
 function createArrFromAttribiutes(target){
@@ -690,6 +719,25 @@ async function DeleteShortcut(shortcutToDelete){
 
 }
 
+async function enableDisableShortcut(shortcut){
+  try {
+    presentShortcuts = await readLocalStorage(getSiteUrlIdentifier()).catch(e => {
+      console.log(e);
+  });
+  } catch (error) {
+    
+  }
+
+  shortcutrsArr = presentShortcuts["data"];
+    
+  let indexOfShortcut = getIndexOfShortcut(shortcutrsArr, shortcut);
+
+  presentShortcuts["data"][indexOfShortcut].options.enabled = !presentShortcuts["data"][indexOfShortcut].options.enabled
+
+  saveToLocalStorage(getSiteUrlIdentifier(), presentShortcuts)
+
+}
+
 
 
 
@@ -730,6 +778,9 @@ chrome.runtime.onMessage.addListener(async function(request){
     await resetStorage().catch(e => { console.log(e); });
   }else if (matchRequest(request, UPDATE_CACHE)){
     updateCache();
+  }else if(matchRequest(request, ENABLE_DISABLE_SHORTCUT)){
+    const shortcut = request.split(REQUEST_SEPARATOR)[1];
+    enableDisableShortcut(shortcut);
   }
   else{
     alert("UNKNOWN REQUEST: " + request)
