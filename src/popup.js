@@ -501,14 +501,3 @@ window.addEventListener('load', async (event) => {
 })
 
 
-// Important for now
-
-// niech bedzie mozliwosc updata shortcuta z poziomu popupa, zeby zmienic z np. alt-h na alt-g latwo
-
-// packeges
-
-// aternative shortcuts
-
-// zeby shortcuty byly posortowane (najpierw enabled, potem disabled)
-
-// shortcut do wloczania/wylaczania rozszerzenia
