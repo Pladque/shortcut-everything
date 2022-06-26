@@ -9,7 +9,9 @@ A chrome extension that allows you to create shortcut on websites and improve yo
 
 
 # Q&A
-## 1. My shortcut doesn't work, why?
+## 1. How to add shortcut
+  Click on big button with "+". Then, eneter your key sequence (you can see current key sequence in field below "Current Key Sequence". Once you do this, click "ENTER" (enter key cannot be part of shortcut!!). Once popup is closed (should close after "enter") click on element you want to be shortcutted. Make sure you are following rules listed in "Tips" above
+## 2. My shortcut doesn't work, why?
   a) Is there a message that "connot find element"?
     If yes - read b)
     If no - It looks like alhorythm found other element with same properties. Try one of the below solution:
@@ -19,9 +21,9 @@ A chrome extension that allows you to create shortcut on websites and improve yo
     it means, that alghorythm cannot find element with saved properties. You 2 options:
         i) If shortcut works only on single(few) website(s) - try using "improve button"
         ii) If you noticed, that element is changing how it looks like while you are holding mouse above it, try incement value in the field before button "update skippable attr count". 
-## 2. I don't understant meaning of some of the buttons
+## 3. I don't understant meaning of some of the buttons
   Keep in mind that it is one of the first versions of this extension. Undescibed buttons may not work.
-## 3. How to asign shortcut to sub web page. For example I want to my shortcut work only on ```www.XYZ.com/ABC``` instead of the whole ```www.XYZ.com```
+## 4. How to asign shortcut to sub web page. For example I want to my shortcut work only on ```www.XYZ.com/ABC``` instead of the whole ```www.XYZ.com```
 Right now it is not possible. 
 
         
