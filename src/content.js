@@ -132,6 +132,7 @@ async function resetStorage(){
   await saveToLocalStorage(getSiteUrlIdentifier(), data)
 }
 
+// its doesnt work imo
 async function updateCache(){
    try {
     const data = await readLocalStorage(getSiteUrlIdentifier())
