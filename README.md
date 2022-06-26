@@ -24,6 +24,8 @@ A chrome extension that allows you to create shortcut on websites and improve yo
    i) try to click in slightly diffrent place of element you want to be shortcutted. 
         
    ii) If similar element is beeing clicked, insead of one you shortcutted, try changing index of yout shortcut. Just input 1 in field before button "change index" in popup (incement this value unit it works)
+   
+   iii) Click button "on/off Inner Text" 
         
   b)  Why I see alert "cannot find element"?
   
