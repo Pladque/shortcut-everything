@@ -357,11 +357,7 @@ function getElementWithProperties(elementProperties){
   const innerText = elementProperties.attributes.others.innerText
   const checkInnerText = elementProperties.attributes.others.checkInnerText
 
-  let wantedElement = null;  
-
-  let currentIndex = 0;
   let indexOfWantetElement = 0
-
 
   let maxNoMatchingFields = 0;
   const optionsJSON =  elementProperties.options
@@ -377,11 +373,13 @@ function getElementWithProperties(elementProperties){
 
   const skippableAttribiutes = optionsJSON.skipableAttribiutes || [];
 
-  // alert(skippableAttribiutes)
+  // alert(JSON.stringify(elementPropertiesJSON))
 
   const attributes_names = getJSONfieldNames(elementPropertiesJSON)
   let noMatchingFields = 0;
   let matchingElements = []
+
+  
   for(let i =0; i<allElements.length; i++){
     let skippedAttribiutes = 0;
 
@@ -396,6 +394,12 @@ function getElementWithProperties(elementProperties){
         noMatchingFields++;
       }
 
+      // if(allElements[i].getAttribute("class") === "w3-right ws-btn"){ //w3-right w3-btn
+      //   alert("xd")
+      // }
+
+      // console.error(allElements[i].getAttribute("class"))
+
       if(!skippableAttribiutes.includes(attributes_names[j])){
         break;
       }
@@ -406,16 +410,11 @@ function getElementWithProperties(elementProperties){
 
     }
 
-    if( noMatchingFields <= maxNoMatchingFields && attributes_names.length >= skippedAttribiutes)
+    if( noMatchingFields <= maxNoMatchingFields)//  && attributes_names.length >= skippedAttribiutes)
     {
+
       if(onlyElementInnerText(allElements[i]) === innerText || checkInnerText===false){
-        // if(currentIndex === indexOfWantetElement){
-          
-        //   wantedElement = allElements[i]
-        //   break;
-        // }else{
-        //   currentIndex++;
-        // }
+
 
          matchingElements.push({
           "noMatchingFields": noMatchingFields,
@@ -423,7 +422,6 @@ function getElementWithProperties(elementProperties){
         })
 
       }
-
     }
 
     noMatchingFields = 0;
@@ -448,7 +446,7 @@ function getElementWithProperties(elementProperties){
   
   if(matchingElements.length >=1){
     // console.error(JSON.stringify(matchingElements[indexOfWantetElement]))
-    return  matchingElements[indexOfWantetElement].element;
+    return  matchingElements[Math.min(indexOfWantetElement, matchingElements.length-1)].element;
   }else{
     return null
   }

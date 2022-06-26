@@ -313,12 +313,75 @@ function onclick_newShortcut () {
   showMessage("enter key sequence, then press ENTER. Once this popup dissaper, click on element you want to be shortcutted")
 }
 
+async function onclick_createPackage () {
+
+  showMessage("Creating package...")
+
+  chrome.tabs.query({currentWindow: true, active: true}, async function (tabs) {
+    var currentTab = tabs[0]; 
+
+    const url = JSON.stringify(currentTab.url)
+    const parsedUrl = parseURL(url);
+    const data = await readLocalStorage(parsedUrl)
+
+    let packageJSON = {}
+
+    packageJSON.site = parsedUrl
+    packageJSON.data = data;
+
+    const package = JSON.stringify(packageJSON)
+
+    let pacakgeField = document.getElementById("package create field");
+    pacakgeField.setAttribute("value", package)
+  });
+
+   showMessage("Package created, ready to copy")
+
+}
+
+function onclick_copyPackage () {
+  
+  var pacakgeField = document.getElementById("package create field");
+  
+  pacakgeField.select();
+  pacakgeField.setSelectionRange(0, 99999); /* For mobile devices */
+  
+  navigator.clipboard.writeText(pacakgeField.value);
+  
+  showMessage("Copied the package!")
+}
+
 function onclick_onOffLocal () {
   sendMessageToContent(ON_OFF_LOCAL_MSG)
 }
 
 function onclick_showShortcuts () {
   sendMessageToContent(GET_SHORTCUTS)
+}
+
+async function onclick_LoadPackage () {
+  showMessage("file is uploaidng...")
+
+  var file = document.getElementById("package input field").files[0];
+  if (file) {
+    var reader = new FileReader();
+    reader.readAsText(file, "UTF-8");
+    reader.onload = async function (evt) {
+      // alert(evt.target.result)
+
+      const dataJSON = JSON.parse(evt.target.result);
+
+      await saveToLocalStorage(dataJSON.site, (dataJSON.data))
+
+      showMessage("Shortcuts read succefully!")
+    }
+    reader.onerror = function (evt) {
+        showMessage("error reading file")
+    }
+
+  }
+
+  
 }
 
 function onclick_newDoubleShortcut (shortcut) {
@@ -358,7 +421,7 @@ async function onclick_updateDesc (shortcut, desc) {
 
   await updateShortcut(shortcut, ["desc"], desc)
   showMessage("updated description")
-  
+
 }
 
 async function onclick_changeIndex(shortcut, ind){
@@ -392,9 +455,12 @@ let improvingShortcut = false
 document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('new_shortcut').addEventListener('click', onclick_newShortcut, false)
+    document.getElementById('create package button').addEventListener('click', onclick_createPackage, false)
+    document.getElementById('copy package').addEventListener('click', onclick_copyPackage, false)
     document.getElementById('on/off button local').addEventListener('click', onclick_onOffLocal, false)
     document.getElementById('reset storage').addEventListener('click', onclick_resetStorage, false)
     document.getElementById('show shortcuts raw').addEventListener('click', onclick_showShortcuts, false)
+    document.getElementById('package input submit button').addEventListener('click', onclick_LoadPackage, false)
 
 }, false)
 
@@ -435,15 +501,14 @@ window.addEventListener('load', async (event) => {
 })
 
 
-
-// zeby shortcuty byly posortowane (najpierw enabled, potem disabled)
+// Important for now
 
 // niech bedzie mozliwosc updata shortcuta z poziomu popupa, zeby zmienic z np. alt-h na alt-g latwo
 
-// skroty z custom wejsciem, np. "p-1" oznacza ze chcemy wziac indeks 0, "p-2", ze indeks 2 itd
-//    to powinno dzialac kiedy sa podobne rzeczy na stronie i chcemy latwo po nich przechodzic
+// packeges
 
-// POZWALAJ ZEBY NIE ZGADZAL SIE NP 1-2 ATRYBUTY, ZEBY DZIEKI TEMU DZIALLO NP.
-//    SEARCH BAR ZAWSZE NA YT
+// aternative shortcuts
+
+// zeby shortcuty byly posortowane (najpierw enabled, potem disabled)
 
 // shortcut do wloczania/wylaczania rozszerzenia
