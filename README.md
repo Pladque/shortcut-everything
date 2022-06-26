@@ -33,7 +33,7 @@ A chrome extension that allows you to create shortcut on websites and improve yo
         
    ii) If you noticed, that element is changing how it looks like while you are holding mouse above it, try incement value in the field before button "update skippable attr count". 
         
-## 3. I don't understant meaning of some of the buttons
+## 3. I don't understand meaning of some of the buttons
   Keep in mind that it is one of the first versions of this extension. Undescibed buttons may not work.
   
 ## 4. How to asign shortcut to sub web page. For example I want to my shortcut work only on ```www.XYZ.com/ABC``` instead of the whole ```www.XYZ.com```
