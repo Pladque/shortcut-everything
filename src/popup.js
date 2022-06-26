@@ -434,16 +434,3 @@ window.addEventListener('load', async (event) => {
 
 })
 
-
-
-// zeby shortcuty byly posortowane (najpierw enabled, potem disabled)
-
-// niech bedzie mozliwosc updata shortcuta z poziomu popupa, zeby zmienic z np. alt-h na alt-g latwo
-
-// skroty z custom wejsciem, np. "p-1" oznacza ze chcemy wziac indeks 0, "p-2", ze indeks 2 itd
-//    to powinno dzialac kiedy sa podobne rzeczy na stronie i chcemy latwo po nich przechodzic
-
-// POZWALAJ ZEBY NIE ZGADZAL SIE NP 1-2 ATRYBUTY, ZEBY DZIEKI TEMU DZIALLO NP.
-//    SEARCH BAR ZAWSZE NA YT
-
-// shortcut do wloczania/wylaczania rozszerzenia
