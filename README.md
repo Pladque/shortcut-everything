@@ -17,22 +17,21 @@ A chrome extension that allows you to create shortcut on websites and improve yo
 ## 2. My shortcut doesn't work, why?
 
   a) Is there a message that "connot find element"?
-  
-    If yes - read b)
+  If yes - read b)
     
-    If no - It looks like alhorythm found other element with same properties. Try one of the below solution:
+   If no - It looks like alhorythm found other element with same properties. Try one of the below solution:
     
-        i) try to click in slightly diffrent place of element you want to be shortcutted. 
+   i) try to click in slightly diffrent place of element you want to be shortcutted. 
         
-        ii) If similar element is beeing clicked, insead of one you shortcutted, try changing index of yout shortcut. Just input 1 in field before button "change index" in popup (incement this value unit it works)
+   ii) If similar element is beeing clicked, insead of one you shortcutted, try changing index of yout shortcut. Just input 1 in field before button "change index" in popup (incement this value unit it works)
         
   b)  Why I see alert "cannot find element"?
   
-    it means, that alghorythm cannot find element with saved properties. You 2 options:
-    
-        i) If shortcut works only on single(few) website(s) - try using "improve button"
+   it means, that alghorythm cannot find element with saved properties. You 2 options:
+   
+   i) If shortcut works only on single(few) website(s) - try using "improve button"
         
-        ii) If you noticed, that element is changing how it looks like while you are holding mouse above it, try incement value in the field before button "update skippable attr count". 
+   ii) If you noticed, that element is changing how it looks like while you are holding mouse above it, try incement value in the field before button "update skippable attr count". 
         
 ## 3. I don't understant meaning of some of the buttons
   Keep in mind that it is one of the first versions of this extension. Undescibed buttons may not work.
