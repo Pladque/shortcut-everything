@@ -313,7 +313,7 @@ function getElementWithProperties(elementProperties, fullSearch){
   let allElements;
 
   if(fullSearch){
-    allElements = document.body.getElementsByTagName("*") // document.body.getElementsByTagName(elementProperties.attributes.tagName);
+    allElements = document.body.getElementsByTagName("*") 
   }else{
     allElements = document.body.getElementsByTagName(elementProperties.attributes.tagName);
   }

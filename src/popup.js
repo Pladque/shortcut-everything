@@ -10,6 +10,20 @@ const GET_SHORTCUTS = "show-shortcuts"          // "show-shortcuts"
 const UPDATE_CACHE = "update-cache"
 const ENABLE_DISABLE_SHORTCUT = "enable-disable-shortcut"
 
+const insertingShortcutModes = {
+  "none": "none",
+  "new": "new",
+  "update": "update"
+}
+
+let insertingShortcutMode = insertingShortcutModes.none
+
+function changeInsertingMode(newMode){
+  insertingShortcutMode = newMode;
+}
+
+let oldShortcut = "";
+
 
 // STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///
 const readLocalStorage = async (key) => {
@@ -309,7 +323,7 @@ async function createShortcutsBoard(tabs) {
 
 /// OnClick functions ////// OnClick functions ////// OnClick functions ////// OnClick functions ///
 function onclick_newShortcut () {
-  insertingShortcut = true;
+  changeInsertingMode(insertingShortcutModes.new)
   showMessage("enter key sequence, then press ENTER. Once this popup dissaper, click on element you want to be shortcutted")
 }
 
@@ -392,7 +406,11 @@ function onclick_newDoubleShortcut (shortcut) {
 }
 
 function onclick_updatekeySequence (shortcut) {
-  showMessage("TODO: update shortcut: " + shortcut)
+  showMessage("insert new Key sequence, then press ENTER, if such a sequence already exists, it will be overwritten")
+  
+  oldShortcut = shortcut;
+  changeInsertingMode(insertingShortcutModes.update);
+
 }
 
 function onclick_enableDisableShortcut (shortcut, currState) {
@@ -450,7 +468,6 @@ async function onclick_changeskippableAmount(shortcut, amount){
 }
 
 ////// Listeners ///////// Listeners ///////// Listeners ///////// Listeners ///
-let insertingShortcut = false
 let improvingShortcut = false
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -466,26 +483,45 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 document.addEventListener('keydown', async (e) =>{
-  if(!insertingShortcut){
-    return
-  }
 
-  let shortcut = getShortcutFromUser(e)
+  if(insertingShortcutMode === insertingShortcutModes.new){
+    let shortcut = getShortcutFromUser(e)
   
-  if(e.key === "Enter"){
-    if(shortcut ==="")
-    {
-      alert("Shortcut cannot be empty!")
-      return
-    }
-
-     chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, CREATE_NEW_SHOWRTCUT_MSG + REQUEST_SEPARATOR + shortcut)
-      })
+    if(e.key === "Enter"){
+      if(shortcut ==="")
+      {
+        alert("Shortcut cannot be empty!")
+        return
+      }
       
-    insertingShortcut = false;
-    window.close();
+      sendMessageToContent(CREATE_NEW_SHOWRTCUT_MSG + REQUEST_SEPARATOR + shortcut)
+      
+      changeInsertingMode(insertingShortcutModes.none)
+
+      window.close();
+    }
   }
+  else if (insertingShortcutMode === insertingShortcutModes.update){
+    let shortcut = getShortcutFromUser(e)
+  
+    if(e.key === "Enter"){
+      if(shortcut ==="")
+      {
+        alert("Shortcut cannot be empty!")
+        return
+      }
+      
+      alert(oldShortcut)
+      alert(shortcut)
+
+      updateShortcut(oldShortcut, ["shortcut"], shortcut)
+
+      changeInsertingMode(insertingShortcutModes.none)
+
+      window.close();
+    }
+  }
+
 })
 
 // INIT actions
@@ -499,5 +535,4 @@ window.addEventListener('load', async (event) => {
   }
 
 })
-
 
