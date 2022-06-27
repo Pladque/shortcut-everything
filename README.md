@@ -7,6 +7,8 @@ A chrome extension that allows you to create shortcut on websites and improve yo
  - While adding shortcut, make sure to click on element that is specific, so algorythm will be able to find it (in most cases clicking in the middle is the best)
  - Sometimes elements may be very different inside, even though they look nearly the same on the surface. In such a cases your shortcut may not always work ( but in the nearest future there will be implemement solution for that!)
  - Make sure you are not overwriting defoult shortcuf for website. If site already implemented any action for key, using it in your shortcut may cause some unexpected behaviors!
+ - If you are using packages, keep in mind that some shortcuts are using (only) text from website to find an element. If you are using different languge, shortcut may not work for you. You can either add such a shortcut by yourself of modify package by changing "innerText" field. 
+
 
 
 # Q&A
