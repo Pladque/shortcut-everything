@@ -5,14 +5,15 @@ var isExtensionEnabled = true;
 let autoCheckInnerTextChange = true;
 
 // Request messages //// Request messages //// Request messages //
-// @WARGNIGN: any word cannot be prefix of another
+// @WARNING: any word cannot be prefix of another
+
 const REQUEST_SEPARATOR = "_";
 const DELETE_SHORTCUTS_MSG = "Delete";
-const CLEAR_STORAGE_MSG = "RESET-FULL"          // "RESET-FULL"
-const CREATE_NEW_SHOWRTCUT_MSG = "new-shortcut" // "new-shortcut"
-const CREATE_NEW_DOUBLE_SHOWRTCUT_MSG = "new-double-shortcut" // "new-double-shortcut"
-const ON_OFF_LOCAL_MSG = "onOff-local"          // "onOff-local"
-const GET_SHORTCUTS = "show-shortcuts"          // "show-shortcuts"
+const CLEAR_STORAGE_MSG = "RESET-FULL"          
+const CREATE_NEW_SHOWRTCUT_MSG = "new-shortcut" 
+const CREATE_NEW_DOUBLE_SHOWRTCUT_MSG = "new-double-shortcut" 
+const ON_OFF_LOCAL_MSG = "onOff-local"         
+const GET_SHORTCUTS = "show-shortcuts"         
 const UPDATE_CACHE = "update-cache"
 const ENABLE_DISABLE_SHORTCUT = "enable-disable-shortcut"
 
@@ -20,6 +21,7 @@ const ENABLE_DISABLE_SHORTCUT = "enable-disable-shortcut"
 const ATTRIBIUTES_TO_SKIP = ["href"]  
 const NOT_WORKING_TAGS = ["svg", "ellipse", "path"]
 const TAGS_TO_SELECT = ["input"]
+const SEARCH_FULL = true
 
 //// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  //////// STORAGE  ////
 //@desc: place to write code directly connecting with storage
@@ -73,30 +75,26 @@ function prepareDataToCache(data){
   for(let i = 0; i < data.data.length; i++){
     shortCutInfo[data.data[i].shortcut] = () => {
       if(isExtensionEnabled && data.data[i].options.enabled){
-        // setInterval(function () {isExtensionEnabled = true}, 1000);
-        // isExtensionEnabled = false;
         const savedShortCut = data.data[i]
         if(savedShortCut && READ_ACTIVE){
-          let elem = getElementWithProperties(savedShortCut) 
+
+          let elem = getElementWithProperties(savedShortCut, false) 
+
           if(elem === null && autoCheckInnerTextChange){
             data.data[i].attributes.others.checkInnerText = ! data.data[i].attributes.others.checkInnerText;
             saveToLocalStorage(getSiteUrlIdentifier(), data)
-            elem = getElementWithProperties(data.data[i]) 
+            elem = getElementWithProperties(data.data[i], false) 
           }
           
-          // // DEBUG
-          // alert(elem.getAttributeNames())
-          // if(elem.getAttributeNames().length >=1){
-          //   alert(elem.getAttribute(elem.getAttributeNames()[0]))
-          // }
-
-
-          ///
+          // idk...
+          if(elem === null && SEARCH_FULL){
+            elem = getElementWithProperties(data.data[i], true) 
+          }
+          
           if(elem === null){
             alert("ERROR, cannot element")
           }
           else{
-            // alert(elem.getAttributeNames())
             try {
               if(TAGS_TO_SELECT.includes(elem.tagName.toLowerCase())){
                 selectText(elem)
@@ -108,13 +106,11 @@ function prepareDataToCache(data){
               alert("Ups, something went wrong")
               alert("Try add " + elem.tagName + " to NOT_WORKING_TAGS in config file (remember to delete this shortcut and add again)")
             }
-            // elem.dispatchEvent(new Event('click'));
-            // goToHref(next_href)
+
           }
     
         }
-        // isExtensionEnabled = true;
-        // onOffLocal();
+
       }
     }
   }
@@ -250,22 +246,17 @@ function selectText(input) {
   input.select();
 }
 
-function triggerFocus(element) {
-    var eventType = "onfocusin" in element ? "focusin" : "focus",
-        bubbles = "onfocusin" in element,
-        event;
-
-    if ("createEvent" in document) {
-        event = document.createEvent("Event");
-        event.initEvent(eventType, bubbles, true);
+// Compare found elements whiel looking for element with properties
+function compareSearchResults( a, b ) {
+    if ( a.noMatchingFields < b.noMatchingFields ){
+      return -1;
     }
-    else if ("Event" in window) {
-        event = new Event(eventType, { bubbles: bubbles, cancelable: true });
+    if ( a.noMatchingFields > b.noMatchingFields ){
+      return 1;
     }
+    return 0;
+  }
 
-    element.focus();
-    element.dispatchEvent(event);
-}
 
 // returns inner text that belongs only to given element, excludes children innerTexts
 function onlyElementInnerText(el){
@@ -312,44 +303,22 @@ function getURL(){
   return window.location.href
 }
 
-// recursively looks for childWannaBe in All childern of parent(and childer of children, and so on)
-// return children if found or null if not found
-function getChild(parent, childWannaBe){
-   const childPropertiesJSON = JSON.parse(childWannaBe);
-
-  for(let i = 0; i< parent.children.length; i++) {
-    const childAttributes = parent.children[i].getAttributeNames();
-    let check = true;
-    for(let j = 0; j<childAttributes.length; j++){
-
-      if( parent.children[i].getAttribute(childAttributes[j]) !== childPropertiesJSON[childAttributes[j]]){
-        check = false
-        break;
-      }
-    }
-
-    if(check){
-      return parent.children[i]
-    }else{
-      const possibleChild = getChild(parent.children[i], childWannaBe)
-      if(possibleChild !== null)
-      {
-        return possibleChild
-      }
-    }
-
-  }
-
-  return null
-
-}
 
 // @DESC: based on properies/attributes (like for example class name) returns matched element from
 //        currently open webpage
 // @INPUT: properties in JSON format as a string
 // @RETURNS: href that matches element with given properties or string "null" if not found   
-function getElementWithProperties(elementProperties){
-  const allElements = document.body.getElementsByTagName("*");
+function getElementWithProperties(elementProperties, fullSearch){
+
+  let allElements;
+
+  if(fullSearch){
+    allElements = document.body.getElementsByTagName("*") // document.body.getElementsByTagName(elementProperties.attributes.tagName);
+  }else{
+    allElements = document.body.getElementsByTagName(elementProperties.attributes.tagName);
+  }
+
+
   let elementPropertiesJSON = {}
   elementPropertiesJSON = JSON.parse(elementProperties.attributes.targetAttributes);
 
@@ -364,7 +333,6 @@ function getElementWithProperties(elementProperties){
 
   if(optionsJSON.maxAmonutOfAttribiutesToSkip){
     maxNoMatchingFields = optionsJSON.maxAmonutOfAttribiutesToSkip;
-    // alert(optionsJSON.maxAmonutOfAttribiutesToSkip)
   }
 
   if(elementProperties.options.elementIndex){
@@ -372,8 +340,6 @@ function getElementWithProperties(elementProperties){
   }
 
   const skippableAttribiutes = optionsJSON.skipableAttribiutes || [];
-
-  // alert(JSON.stringify(elementPropertiesJSON))
 
   const attributes_names = getJSONfieldNames(elementPropertiesJSON)
   let noMatchingFields = 0;
@@ -394,12 +360,6 @@ function getElementWithProperties(elementProperties){
         noMatchingFields++;
       }
 
-      // if(allElements[i].getAttribute("class") === "w3-right ws-btn"){ //w3-right w3-btn
-      //   alert("xd")
-      // }
-
-      // console.error(allElements[i].getAttribute("class"))
-
       if(!skippableAttribiutes.includes(attributes_names[j])){
         break;
       }
@@ -410,7 +370,7 @@ function getElementWithProperties(elementProperties){
 
     }
 
-    if( noMatchingFields <= maxNoMatchingFields)//  && attributes_names.length >= skippedAttribiutes)
+    if( noMatchingFields <= maxNoMatchingFields)
     {
 
       if(onlyElementInnerText(allElements[i]) === innerText || checkInnerText===false){
@@ -428,30 +388,16 @@ function getElementWithProperties(elementProperties){
   }
 
 
-  function compare( a, b ) {
-    if ( a.noMatchingFields < b.noMatchingFields ){
-      return -1;
-    }
-    if ( a.noMatchingFields > b.noMatchingFields ){
-      return 1;
-    }
-    return 0;
-  }
-
-  matchingElements.sort( compare );
-
-  // for(let i = 0; i< matchingElements.length; i++){
-  //   console.error(JSON.stringify(matchingElements[i]))
-  // }
+  
+  matchingElements.sort( compareSearchResults );
   
   if(matchingElements.length >=1){
-    // console.error(JSON.stringify(matchingElements[indexOfWantetElement]))
     return  matchingElements[Math.min(indexOfWantetElement, matchingElements.length-1)].element;
-  }else{
-    return null
   }
-  
+
+  return null
 }
+
 
 function createArrFromAttribiutes(target){
   var temp_button_data = {};
@@ -478,22 +424,21 @@ async function getButtonInfo(e){
   var target = e.target || e.srcElement
   
   const orginalTarget = target
-  while(NOT_WORKING_TAGS.includes(target.tagName)){
-    target = target.parentElement;
+  try {
+    while(NOT_WORKING_TAGS.includes(target.tagName)){
+      target = target.parentElement;
+    }
+  } catch (error) {
+    alert("Something went wrong! There are no clickable tags nearby!");
   }
 
-  let button_data = {}
-  button_data.targetAttributes = JSON.stringify(createArrFromAttribiutes(target))
+  let button_data = {};
+  button_data.targetAttributes = JSON.stringify(createArrFromAttribiutes(target));
+  button_data.tagName = target.tagName
+  button_data.others = {checkInnerText: true};
+  button_data.others.innerText = onlyElementInnerText(orginalTarget);
 
-  // if(target !== orginalTarget){
-  //   button_data.orginalTargetAttributes = JSON.stringify(createArrFromAttribiutes(orginalTarget))
-  // }
-
-  button_data.others = {checkInnerText: true}
-  button_data.others.innerText = onlyElementInnerText(orginalTarget)
-
-  return button_data
-
+  return button_data;
 }
 
 //// EVENTS FUNCTIONS /////// EVENTS FUNCTIONS /////// EVENTS FUNCTIONS /////// EVENTS FUNCTIONS ///
@@ -529,9 +474,8 @@ async function newShortcut(shortcut){
     if(READ_ACTIVE || shortcut === undefined){
       return
     }
-    shortcut = globalShortcut
-
     
+    shortcut = globalShortcut
     READ_ACTIVE = true;
     
     const elementPropertiesWithOrginal = await getButtonInfo(e).catch(e => {
@@ -551,21 +495,24 @@ async function newShortcut(shortcut){
     }
 
     const description = "No description provided"
+
     const shortcutInfoObj = {
       "shortcut": shortcut, 
       "attributes": elementPropertiesWithOrginal, 
       "desc": description, 
       "options": {
-        enabled: true, 
-        skipableAttribiutes:    Object.keys(JSON.parse(elementPropertiesWithOrginal.targetAttributes)),
-        maxAmonutOfAttribiutesToSkip: 0,
+        "enabled": true, 
+        "skipableAttribiutes":    Object.keys(JSON.parse(elementPropertiesWithOrginal.targetAttributes)),
+        "maxAmonutOfAttribiutesToSkip": 0,
       }
     }
 
     if(presentShortcuts === null || presentShortcuts === undefined){
-      await saveToLocalStorage(site,  {"data": [ shortcutInfoObj ], "info": {"enabled": true} }).catch(e => {
-        console.log(e);
-      });
+      await saveToLocalStorage(site,  {"data": [ shortcutInfoObj ], "info": {"enabled": true} })
+        .catch(e => {
+          console.log(e);
+        });
+
     }else{
       shortcutrsArr = presentShortcuts["data"]
       
@@ -585,26 +532,20 @@ async function newShortcut(shortcut){
       shortcut = ""
   }
   , true)
-
 }
 
 
 async function improveShortcut(shortcut){
   READ_ACTIVE = false;
 
-      
   globalShortcut = shortcut  
   document.body.addEventListener('click', async (e) => {
     if(READ_ACTIVE || shortcut === undefined){
       return
     }
     
-    
-
-    
     shortcut = globalShortcut
 
-    
     READ_ACTIVE = true;
     
     const elementPropertiesWithOrginal = await getButtonInfo(e).catch(e => {
@@ -623,20 +564,17 @@ async function improveShortcut(shortcut){
       
     }
 
-    const description = "No description provided"
-    const shortcutInfoObj = {"shortcut": shortcut, "attributes": elementPropertiesWithOrginal, "desc": description, "options": {enabled: true  }}
-
-    // alert(JSON.stringify(shortcutInfoObj))
-
     if(presentShortcuts === null || presentShortcuts === undefined){
-      alert("Something went wrong coudnt find shortcut: " + globalShortcut)
+      alert("Something went wrong coudnt find any shortcuts! (" + shortcut + ")")
     }else{
       shortcutrsArr = presentShortcuts["data"]
       
       let indexOfShortcut = getIndexOfShortcut(shortcutrsArr, shortcut)
       
-      if(indexOfShortcut === -1){  // coudn find suach a shortcut
+      if(indexOfShortcut === -1){  // coudn find such a shortcut
+
         alert("Something went wrong coudnt find shortcut: " + globalShortcut)
+
       }else{  // improve shortcut
 
         let attributesProduct = {"targetAttributes": {}, "others": {}}
@@ -645,10 +583,6 @@ async function improveShortcut(shortcut){
         const oldTargetAttribiutes = JSON.parse(shortcutrsArr[indexOfShortcut].attributes.targetAttributes);
         
         for (const [key, value] of Object.entries(oldTargetAttribiutes)) {
-          // console.error(`${key}: ${value}`);
-          // console.error((newTargetAttribiutes)[key])
-          // console.error((oldTargetAttribiutes)[key])
-
           if(newTargetAttribiutes[key] === oldTargetAttribiutes[key]){
             attributesProduct.targetAttributes[key] = newTargetAttribiutes[key]
           }
@@ -657,8 +591,6 @@ async function improveShortcut(shortcut){
         const newTargetothers = (elementPropertiesWithOrginal.others);
         const oldTargetOthers = (shortcutrsArr[indexOfShortcut].attributes.others);
         
-        // alert(newTargetothers)
-
         for (const [key, value] of Object.entries(oldTargetOthers)) {
 
           if(newTargetothers[key] === oldTargetOthers[key] || key === "checkInnerText"){
@@ -666,9 +598,7 @@ async function improveShortcut(shortcut){
           }
         }     
         
-         
         shortcutrsArr[indexOfShortcut].attributes.targetAttributes = JSON.stringify(attributesProduct.targetAttributes)
-        // console.error(JSON.stringify(shortcutrsArr[indexOfShortcut]))
       }
 
       await saveToLocalStorage(site,  {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {
@@ -743,10 +673,8 @@ async function enableDisableShortcut(shortcut){
 //// EVENT LISTENER && HANDLER //////// EVENT LISTENER && HANDLER //////// EVENT LISTENER && HANDLER ////
 //@desc: main message listener(s) and handler for extension
 
-
 // Requests listener
 chrome.runtime.onMessage.addListener(async function(request){
-  // temp, just to make debuging easier
   if(matchRequest(request, GET_SHORTCUTS) ){
     const data = await readLocalStorage(getSiteUrlIdentifier())
     alert(JSON.stringify(data))
@@ -759,12 +687,13 @@ chrome.runtime.onMessage.addListener(async function(request){
   {
     const shortcutStartInd = CREATE_NEW_SHOWRTCUT_MSG.length + REQUEST_SEPARATOR.length
     const shortcut = request.substr(shortcutStartInd,request.length-1)
-    // alert(shortcut)
+
     await  newShortcut(shortcut).catch(e => {console.log(e); });
 
   }else if( matchRequest(request, CREATE_NEW_DOUBLE_SHOWRTCUT_MSG)){
       const shortcutToImprove = request.split(REQUEST_SEPARATOR)[1]
       improveShortcut(shortcutToImprove)
+
   } 
   else if( matchRequest(request, DELETE_SHORTCUTS_MSG)){
 
@@ -774,12 +703,18 @@ chrome.runtime.onMessage.addListener(async function(request){
     await DeleteShortcut(shortcutToDelete).catch(e => {console.log(e);});
    
   }else if (matchRequest(request, CLEAR_STORAGE_MSG)){
+
     await resetStorage().catch(e => { console.log(e); });
+
   }else if (matchRequest(request, UPDATE_CACHE)){
+
     updateCache();
+
   }else if(matchRequest(request, ENABLE_DISABLE_SHORTCUT)){
+
     const shortcut = request.split(REQUEST_SEPARATOR)[1];
     enableDisableShortcut(shortcut);
+
   }
   else{
     alert("UNKNOWN REQUEST: " + request)
@@ -807,7 +742,4 @@ chrome.runtime.onMessage.addListener(async function(request){
 // INIT actions
 window.addEventListener('load', async (event) => {
   updateCache()
- 
-
 })
-
