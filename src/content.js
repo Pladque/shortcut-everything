@@ -18,7 +18,7 @@ const UPDATE_CACHE = "update-cache"
 const ENABLE_DISABLE_SHORTCUT = "enable-disable-shortcut"
 
 
-const ATTRIBIUTES_TO_SKIP = ["href"]  
+const ATTRIBIUTES_TO_SKIP = ["href", "src"]  
 const NOT_WORKING_TAGS = ["svg", "ellipse", "path"]
 const TAGS_TO_SELECT = ["input"]
 const SEARCH_FULL = true
@@ -95,6 +95,7 @@ function prepareDataToCache(data){
             alert("ERROR, cannot element")
           }
           else{
+
             try {
               if(TAGS_TO_SELECT.includes(elem.tagName.toLowerCase())){
                 selectText(elem)

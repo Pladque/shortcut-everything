@@ -511,9 +511,6 @@ document.addEventListener('keydown', async (e) =>{
         return
       }
       
-      alert(oldShortcut)
-      alert(shortcut)
-
       updateShortcut(oldShortcut, ["shortcut"], shortcut)
 
       changeInsertingMode(insertingShortcutModes.none)
@@ -536,3 +533,12 @@ window.addEventListener('load', async (event) => {
 
 })
 
+// refaktor zapisywania skrótów -- 
+
+// alternative shortcuts
+
+// try to make simple background page 
+// https://github.com/shama/letswritecode/tree/master/how-to-make-chrome-extensions/bear
+
+
+// jak rozwiazqac problem mlodego dzbana....
