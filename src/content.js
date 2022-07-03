@@ -73,12 +73,13 @@ function findElement(savedShortCut){
    let elem = getElementWithProperties(savedShortCut, false) 
 
     if(elem === null && autoCheckInnerTextChange){
-      data.data[i].attributes.others.checkInnerText = ! data.data[i].attributes.others.checkInnerText;
-      elem = getElementWithProperties(data.data[i], false) 
+      savedShortCut.attributes.others.checkInnerText = ! savedShortCut.attributes.others.checkInnerText;
+      elem = getElementWithProperties(savedShortCut, false) 
 
-      if(elem!== null){
-        saveToLocalStorage(getSiteUrlIdentifier(), data)
-      }
+      //TODO;  it should save itself as well
+      // if(elem!== null){
+      //   saveToLocalStorage(getSiteUrlIdentifier(), data)
+      // }
 
     }
 
@@ -101,10 +102,10 @@ function prepareDataToCache(data){
           
           //if(elem === null){
             const alternativeShortcutInd =  +data.data[i].options.nextAlternative;
-            alert(alternativeShortcut)
-            if(alternativeShortcut>=0){
-              elem = findElement(data.data[alternativeShortcutInd])
-            }
+            //alert(alternativeShortcut)
+            // if(alternativeShortcut>=0){
+            //   elem = findElement(data.data[alternativeShortcutInd])
+            // }
           //}
 
           if(elem === null){
