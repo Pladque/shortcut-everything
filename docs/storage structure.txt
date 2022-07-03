@@ -20,7 +20,8 @@
 					"options": { 
 						enabled: (bool),
 						elementIndex: (int),
-						
+						nextAlternative: (int),
+						isAlternative: (bool)
 						}
 				},
 				....
@@ -61,6 +62,11 @@
 "options" -- place to add options for inditivual shortcut, like "enabled", "delay" etc (non of them is currenlty in use)
 
 "elementIndex" -- 	if there are N similar elements, and you want Kth element to be shortcuted, then you should change elementIndex to k to make it work
+
+
+"nextAlternative" -- 	holds the index of next alternative shortcut, if there is none value is 0
+
+"isAlternative"	--		determinates if is shortcut is alternative for other shortcut
 
 "info" -- iformation that applites for all shortcuts in site
 	"enabled" -- determiens wherther extension should run on this page

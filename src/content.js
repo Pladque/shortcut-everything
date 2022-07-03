@@ -69,28 +69,44 @@ async function saveToLocalStorage(name, obj){
 
 ///// STORAGE RELATED / CACHE ////////// STORAGE RELATED / CACHE ////////// STORAGE RELATED / CACHE ////////// STORAGE RELATED / CACHE /////
 
+function findElement(savedShortCut){
+   let elem = getElementWithProperties(savedShortCut, false) 
+
+    if(elem === null && autoCheckInnerTextChange){
+      data.data[i].attributes.others.checkInnerText = ! data.data[i].attributes.others.checkInnerText;
+      elem = getElementWithProperties(data.data[i], false) 
+
+      if(elem!== null){
+        saveToLocalStorage(getSiteUrlIdentifier(), data)
+      }
+
+    }
+
+    return elem;
+}
+
 // prepares data from memory to save inside cache
 function prepareDataToCache(data){
   let shortCutInfo = {}
   for(let i = 0; i < data.data.length; i++){
+    // TODO: add if here "if its alternative then do not add" xd
     shortCutInfo[data.data[i].shortcut] = () => {
       if(isExtensionEnabled && data.data[i].options.enabled){
         const savedShortCut = data.data[i]
         if(savedShortCut && READ_ACTIVE){
 
-          let elem = getElementWithProperties(savedShortCut, false) 
+          let elem = findElement(savedShortCut) 
 
-          if(elem === null && autoCheckInnerTextChange){
-            data.data[i].attributes.others.checkInnerText = ! data.data[i].attributes.others.checkInnerText;
-            saveToLocalStorage(getSiteUrlIdentifier(), data)
-            elem = getElementWithProperties(data.data[i], false) 
-          }
+        
           
-          // idk...
-          if(elem === null && SEARCH_FULL){
-            elem = getElementWithProperties(data.data[i], true) 
-          }
-          
+          //if(elem === null){
+            const alternativeShortcutInd =  +data.data[i].options.nextAlternative;
+            alert(alternativeShortcut)
+            if(alternativeShortcut>=0){
+              elem = findElement(data.data[alternativeShortcutInd])
+            }
+          //}
+
           if(elem === null){
             alert("ERROR, cannot element")
           }
@@ -505,6 +521,8 @@ async function newShortcut(shortcut){
         "enabled": true, 
         "skipableAttribiutes":    Object.keys(JSON.parse(elementPropertiesWithOrginal.targetAttributes)),
         "maxAmonutOfAttribiutesToSkip": 0,
+        "nextAlternative": -1,
+        "isAlternative": false
       }
     }
 

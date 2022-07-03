@@ -287,9 +287,9 @@ function getShortcut(keySequence){
   return new Array(...keySequence).join('-').toLowerCase();
 }
 
-function sendMessageToContent(msg){
-  chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, msg)
+async function sendMessageToContent(msg){
+  await chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
+      chrome.tabs.sendMessage(tabs[0].id, msg);
       
   })
 }
@@ -533,7 +533,6 @@ window.addEventListener('load', async (event) => {
 
 })
 
-// refaktor zapisywania skrótów -- 
 
 // alternative shortcuts
 
