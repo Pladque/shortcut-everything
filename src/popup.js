@@ -369,6 +369,13 @@ function onclick_onOffLocal () {
   sendMessageToContent(ON_OFF_LOCAL_MSG)
 }
 
+
+function onclick_openSettings () {
+ chrome.tabs.create({
+      url: 'settings.html'
+    });
+}
+
 function onclick_showShortcuts () {
   sendMessageToContent(GET_SHORTCUTS)
 }
@@ -475,6 +482,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('create package button').addEventListener('click', onclick_createPackage, false)
     document.getElementById('copy package').addEventListener('click', onclick_copyPackage, false)
     document.getElementById('on/off button local').addEventListener('click', onclick_onOffLocal, false)
+    document.getElementById('settings button').addEventListener('click', onclick_openSettings, false)
     document.getElementById('reset storage').addEventListener('click', onclick_resetStorage, false)
     document.getElementById('show shortcuts raw').addEventListener('click', onclick_showShortcuts, false)
     document.getElementById('package input submit button').addEventListener('click', onclick_LoadPackage, false)
