@@ -255,8 +255,6 @@ async function updateShortcut(shortcut, fields, newValue){
       }
     }
   })
-
-
 }
 
 /// creating shortcut /// /// creating shortcut /// /// creating shortcut /// /// creating shortcut /// 
@@ -417,7 +415,6 @@ function onclick_updatekeySequence (shortcut) {
   
   oldShortcut = shortcut;
   changeInsertingMode(insertingShortcutModes.update);
-
 }
 
 function onclick_enableDisableShortcut (shortcut, currState) {
@@ -541,12 +538,21 @@ window.addEventListener('load', async (event) => {
 
 })
 
-// refaktor zapisywania skrótów -- 
-
-// alternative shortcuts
-
 // try to make simple background page 
 // https://github.com/shama/letswritecode/tree/master/how-to-make-chrome-extensions/bear
+// dodaj tam zeby sie wyswetiallo mniej wiecej co i jak, nie musi jeszcze dzialac, nie musi byc dodatkowych ustawien
+//    niech bedzie latwo jakos edytowac ten zapis, np. zeby checki na "consider" albo "nie cosider" inner txt, 
+//    zeby to bylo ladnie w polach wypisane
+
+//  ale niech beda z boku klikalne taby (jak w tym co mam do shortcutow)
+
+// merguj to z mainem
+
+// refactor zeby cache sie aktualizowac "storage.onChanged" bo jest taka opcja
+
+
+// alternative shortcuts  --  pamietaj pobrac z maina jak to wyglada i od nowa robic
+
 
 
 // jak rozwiazqac problem mlodego dzbana....
