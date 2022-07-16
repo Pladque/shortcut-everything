@@ -1,4 +1,24 @@
 
+
+const REQUEST_SEPARATOR = "_";
+const DELETE_SHORTCUTS_MSG = "Delete";
+const CLEAR_STORAGE_MSG = "RESET-FULL"          
+const CREATE_NEW_SHOWRTCUT_MSG = "new-shortcut" 
+const CREATE_NEW_DOUBLE_SHOWRTCUT_MSG = "new-double-shortcut" 
+const ON_OFF_LOCAL_MSG = "onOff-local"         
+const GET_SHORTCUTS = "show-shortcuts"         
+const UPDATE_CACHE = "update-cache"
+const ENABLE_DISABLE_SHORTCUT = "enable-disable-shortcut"
+
+
+const ATTRIBIUTES_TO_SKIP = ["href", "src"]  
+const NOT_WORKING_TAGS = ["svg", "ellipse", "path"]
+const TAGS_TO_SELECT = ["input"]
+const SEARCH_FULL = true
+
+
+
+
 const readLocalStorage = async (key) => {
     return new Promise((resolve, reject) => {
       chrome.storage.local.get([key], function (result) {
@@ -58,11 +78,21 @@ async function updateShortcut(shortcut, fields, newValue, url){
   })
 }
 
-
 // ON CLICKS //
 async function onclick_updateDesc (shortcut, desc, site) {
     showMessage("updated description on "+ site )
     await updateShortcut(shortcut, ["desc"], desc, site)
+}
+
+async function onclick_enableDisableShortcut (shortcut, currState, site) {
+  if (currState === "true"){
+        await updateShortcut(shortcut, ["options", "enabled"], false, site)
+        showMessage("Shortcut enabled: " + "false")
+    }else{
+        await updateShortcut(shortcut, ["options", "enabled"], true, site)
+        showMessage("Shortcut enabled: " + "true")
+  }
+
 }
 
 function createShortcutPanelRow(shortcutData, site){
@@ -81,6 +111,7 @@ function createShortcutPanelRow(shortcutData, site){
     enableButton.setAttribute("shortcut-enabled", shortcutData.options.enabled)
     enableButton.setAttribute("class", "enable button");
     enableButton.setAttribute("value", shortcutData.shortcut)
+    enableButton.setAttribute("site", site)
 
     var name = document.createTextNode(shortcutData.shortcut)
 
@@ -141,7 +172,7 @@ function createShortcutPanelRow(shortcutData, site){
 
     enableButton.addEventListener('click', function() {
         const currState = enableButton.getAttribute("shortcut-enabled");
-        onclick_enableDisableShortcut( shortcutData.shortcut, currState);
+        onclick_enableDisableShortcut( shortcutData.shortcut, currState, site);
 
         if(currState === "true"){
           enableButton.setAttribute("shortcut-enabled", "false");
