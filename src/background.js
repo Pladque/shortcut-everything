@@ -95,6 +95,60 @@ async function onclick_enableDisableShortcut (shortcut, currState, site) {
 
 }
 
+async function onclick_deleteShortcut( shortcut, site){
+  DeleteShortcut(shortcut, site);
+  showMessage("deleted")
+}
+
+////
+
+function getIndexOfShortcut(shortcutrsArr, shortcut){
+  let index = -1;
+  for(let i =0; i< shortcutrsArr.length; i++){
+    if(shortcutrsArr[i]["shortcut"] === shortcut){
+      index = i;
+      break;
+    }
+  }
+
+  return index
+}
+
+
+async function DeleteShortcut(shortcutToDelete, site){
+  let presentShortcuts = null
+
+  try {
+    presentShortcuts = await readLocalStorage(site).catch(e => {console.log(e);});
+  } catch (error) {  }
+
+  if(presentShortcuts === null){
+    alert("not found any shortcuts for this site: " + site)
+    return
+  }
+  
+  shortcutrsArr = presentShortcuts.data
+  
+  let indexOfShortcut = getIndexOfShortcut(shortcutrsArr, shortcutToDelete)
+  
+  let shortcutInfo = {}
+  if(indexOfShortcut === -1){  // not found shortcut
+
+    alert("not found shortcut: " +  shortcutToDelete + ". Nothing deleted")
+    return
+
+  }else{  // delete shortcut
+
+    shortcutInfo = shortcutrsArr[indexOfShortcut] 
+    shortcutrsArr.splice(indexOfShortcut, 1);
+  }
+
+  await saveToLocalStorage(site, {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {console.log(e);});
+  
+  alert("deleted " + shortcutToDelete +" "+ shortcutInfo["desc"])
+
+}
+
 function createShortcutPanelRow(shortcutData, site){
     var newNode = document.createElement('p');
     newNode.setAttribute("style", "background-color: aliceblue;")
@@ -111,7 +165,7 @@ function createShortcutPanelRow(shortcutData, site){
     enableButton.setAttribute("shortcut-enabled", shortcutData.options.enabled)
     enableButton.setAttribute("class", "enable button");
     enableButton.setAttribute("value", shortcutData.shortcut)
-    enableButton.setAttribute("site", site)
+    // enableButton.setAttribute("site", site)
 
     var name = document.createTextNode(shortcutData.shortcut)
 
@@ -126,14 +180,14 @@ function createShortcutPanelRow(shortcutData, site){
     descSubmitButton.setAttribute("class", "change desc button");
     descSubmitButton.setAttribute("value", shortcutData.shortcut)
     
-    descSubmitButton.setAttribute("site", site);
+    // descSubmitButton.setAttribute("site", site);
     
     let deleteButton = document.createElement("BUTTON");
     deleteButton.innerText = "delete"
     deleteButton.setAttribute("class", "delete button");
     deleteButton.setAttribute("value", shortcutData.shortcut);
 
-    deleteButton.setAttribute("site", site);
+    // deleteButton.setAttribute("site", site);
 
 
 
@@ -184,7 +238,7 @@ function createShortcutPanelRow(shortcutData, site){
     }, false);
 
     deleteButton.addEventListener('click', function() {
-        onclick_deleteShortcut( shortcutData.shortcut)
+        onclick_deleteShortcut( shortcutData.shortcut, site)
       }, false);
 
     descSubmitButton.addEventListener('click', function() {
