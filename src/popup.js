@@ -118,19 +118,19 @@ function createShortcutPanelRow(shortcutData){
     indexSubmitButton.setAttribute("class", "change index button button");
     indexSubmitButton.setAttribute("value", shortcutData.shortcut);
 
-    let onOffInnerTextButton = document.createElement("BUTTON");
-    onOffInnerTextButton.innerText = "on/off inner text"
-    onOffInnerTextButton.setAttribute("class", "on/off inner text button");
-    onOffInnerTextButton.setAttribute("value", shortcutData.shortcut);
+    // let onOffInnerTextButton = document.createElement("BUTTON");
+    // onOffInnerTextButton.innerText = "on/off inner text"
+    // onOffInnerTextButton.setAttribute("class", "on/off inner text button");
+    // onOffInnerTextButton.setAttribute("value", shortcutData.shortcut);
 
-    // alert(typeof shortcutData.attributes.others.checkInnerText)
-    if(shortcutData.attributes.others.checkInnerText){
-      // alert(1)
-      onOffInnerTextButton.setAttribute("state", true);
-    }else{
-      // alert(2)
-      onOffInnerTextButton.setAttribute("state", false);
-    }
+    // // alert(typeof shortcutData.attributes.others.checkInnerText)
+    // if(shortcutData.attributes.others.checkInnerText){
+    //   // alert(1)
+    //   onOffInnerTextButton.setAttribute("state", true);
+    // }else{
+    //   // alert(2)
+    //   onOffInnerTextButton.setAttribute("state", false);
+    // }
 
 
     let improveButton = document.createElement("BUTTON");
@@ -143,15 +143,15 @@ function createShortcutPanelRow(shortcutData){
     updateKeySequenceButton.setAttribute("class", "update shortcut");
     updateKeySequenceButton.setAttribute("value", shortcutData.shortcut);
 
-    let amountOfSkipableAttribiutes = document.createElement("INPUT");
-    amountOfSkipableAttribiutes.setAttribute("value", shortcutData.options.maxAmonutOfAttribiutesToSkip || "0");
-    amountOfSkipableAttribiutes.setAttribute("type", "text");
-    amountOfSkipableAttribiutes.setAttribute("id", "max skippable attribiutes "+ shortcutData.shortcut);
+    // let amountOfSkipableAttribiutes = document.createElement("INPUT");
+    // amountOfSkipableAttribiutes.setAttribute("value", shortcutData.options.maxAmonutOfAttribiutesToSkip || "0");
+    // amountOfSkipableAttribiutes.setAttribute("type", "text");
+    // amountOfSkipableAttribiutes.setAttribute("id", "max skippable attribiutes "+ shortcutData.shortcut);
 
-    let updateSkipableAttribiutesAmountButton = document.createElement("BUTTON");
-    updateSkipableAttribiutesAmountButton.innerText = "update skippable attrs amount"
-    updateSkipableAttribiutesAmountButton.setAttribute("class", "update skippable attrs amount");
-    updateSkipableAttribiutesAmountButton.setAttribute("value", shortcutData.shortcut);
+    // let updateSkipableAttribiutesAmountButton = document.createElement("BUTTON");
+    // updateSkipableAttribiutesAmountButton.innerText = "update skippable attrs amount"
+    // updateSkipableAttribiutesAmountButton.setAttribute("class", "update skippable attrs amount");
+    // updateSkipableAttribiutesAmountButton.setAttribute("value", shortcutData.shortcut);
 
     
     newNode.appendChild(enableButton)
@@ -161,11 +161,11 @@ function createShortcutPanelRow(shortcutData){
     newNode.appendChild(deleteButton)
     newNode.appendChild(indexInputField)
     newNode.appendChild(indexSubmitButton)
-    newNode.appendChild(onOffInnerTextButton)
+    // newNode.appendChild(onOffInnerTextButton)
     newNode.appendChild(improveButton)
     newNode.appendChild(updateKeySequenceButton)
-    newNode.appendChild(amountOfSkipableAttribiutes)
-    newNode.appendChild(updateSkipableAttribiutesAmountButton)
+    // newNode.appendChild(amountOfSkipableAttribiutes)
+    // newNode.appendChild(updateSkipableAttribiutesAmountButton)
 
     enableButton.addEventListener('click', function() {
         const currState = enableButton.getAttribute("shortcut-enabled");
@@ -194,20 +194,20 @@ function createShortcutPanelRow(shortcutData){
       onclick_changeIndex( shortcutData.shortcut, indexInput.value)
     }, false);
 
-    onOffInnerTextButton.addEventListener('click', function() {
-      // alert(onOffInnerTextButton.getAttribute("state"))
-      // onclick_checkInnertext( shortcutData.shortcut, onOffInnerTextButton.getAttribute("state"))
+    // onOffInnerTextButton.addEventListener('click', function() {
+    //   // alert(onOffInnerTextButton.getAttribute("state"))
+    //   // onclick_checkInnertext( shortcutData.shortcut, onOffInnerTextButton.getAttribute("state"))
       
-      if(onOffInnerTextButton.getAttribute("state") === "true" ){
-        onclick_checkInnertext( shortcutData.shortcut,  false)
-        onOffInnerTextButton.setAttribute("state", false);
-      }else{
-        onclick_checkInnertext( shortcutData.shortcut,  true)
-        onOffInnerTextButton.setAttribute("state", true);
-      }
+    //   if(onOffInnerTextButton.getAttribute("state") === "true" ){
+    //     onclick_checkInnertext( shortcutData.shortcut,  false)
+    //     onOffInnerTextButton.setAttribute("state", false);
+    //   }else{
+    //     onclick_checkInnertext( shortcutData.shortcut,  true)
+    //     onOffInnerTextButton.setAttribute("state", true);
+    //   }
 
 
-    }, false);
+    // }, false);
 
     improveButton.addEventListener('click', function() {
       onclick_newDoubleShortcut( shortcutData.shortcut)
@@ -218,10 +218,10 @@ function createShortcutPanelRow(shortcutData){
     }, false);
 
 
-     updateSkipableAttribiutesAmountButton.addEventListener('click', function() {
-      const amountInput = document.getElementById("max skippable attribiutes "+ shortcutData.shortcut)
-      onclick_changeskippableAmount( shortcutData.shortcut, amountInput.value)
-    }, false);
+    //  updateSkipableAttribiutesAmountButton.addEventListener('click', function() {
+    //   const amountInput = document.getElementById("max skippable attribiutes "+ shortcutData.shortcut)
+    //   onclick_changeskippableAmount( shortcutData.shortcut, amountInput.value)
+    // }, false);
 
 
     return newNode;
