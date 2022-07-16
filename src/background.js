@@ -50,6 +50,23 @@ function showMessage(message){
   document.getElementById('message').innerText = message
 }
 
+async function onOffSite(site){
+  let siteData = await readLocalStorage(site).catch(e => {
+    console.log(e);
+  });
+
+  siteData.info.enabled = !siteData.info.enabled
+  isExtensionEnabled = siteData.info.enabled;
+  const updatedRecord = siteData;
+
+  await saveToLocalStorage(site, updatedRecord).catch(e => {
+    console.log(e);
+  });;
+
+  alert("extension for this site is enabled: " + siteData.info.enabled)
+
+}
+
 async function updateShortcut(shortcut, fields, newValue, url){
   chrome.tabs.query({currentWindow: true, active: true}, async function (tabs) {
 
@@ -98,6 +115,11 @@ async function onclick_enableDisableShortcut (shortcut, currState, site) {
 async function onclick_deleteShortcut( shortcut, site){
   DeleteShortcut(shortcut, site);
   showMessage("deleted")
+}
+
+async function onclick_onOffSite(site){
+  onOffSite(site);
+  showMessage("site " + site + " has beed turned")
 }
 
 ////
@@ -292,6 +314,15 @@ async function createShortcutsBoard(tabs) {
                 newTitle.innerHTML = url;
 
                 node.appendChild(newTitle)
+
+
+                var onOffSiteButton = document.createElement('button');
+                onOffSiteButton.innerText = "On/Off site"
+                node.appendChild(onOffSiteButton)
+
+                onOffSiteButton.addEventListener('click', function() {
+                  onclick_onOffSite(url)
+                }, false);
                 
                 
                 for(let i = 0; i< data.data.length; i++){
