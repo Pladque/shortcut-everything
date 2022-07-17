@@ -1,3 +1,5 @@
+
+
 // Request messages //// Request messages //// Request messages //
 // @WARGNIGN: any word cannot be prefix of another
 const REQUEST_SEPARATOR = "_";
@@ -25,6 +27,7 @@ function changeInsertingMode(newMode){
 let oldShortcut = "";
 
 
+
 // STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///
 const readLocalStorage = async (key) => {
     return new Promise((resolve, reject) => {
@@ -37,6 +40,10 @@ const readLocalStorage = async (key) => {
       });
     });
   };
+
+//   chrome.storage.onChanged.addListener(function(changes, namespace) {
+//      alert("change recived! 2");
+// });
 
 // saves to local storage
 async function saveToLocalStorage(name, obj){
@@ -118,19 +125,19 @@ function createShortcutPanelRow(shortcutData){
     indexSubmitButton.setAttribute("class", "change index button button");
     indexSubmitButton.setAttribute("value", shortcutData.shortcut);
 
-    let onOffInnerTextButton = document.createElement("BUTTON");
-    onOffInnerTextButton.innerText = "on/off inner text"
-    onOffInnerTextButton.setAttribute("class", "on/off inner text button");
-    onOffInnerTextButton.setAttribute("value", shortcutData.shortcut);
+    // let onOffInnerTextButton = document.createElement("BUTTON");
+    // onOffInnerTextButton.innerText = "on/off inner text"
+    // onOffInnerTextButton.setAttribute("class", "on/off inner text button");
+    // onOffInnerTextButton.setAttribute("value", shortcutData.shortcut);
 
-    // alert(typeof shortcutData.attributes.others.checkInnerText)
-    if(shortcutData.attributes.others.checkInnerText){
-      // alert(1)
-      onOffInnerTextButton.setAttribute("state", true);
-    }else{
-      // alert(2)
-      onOffInnerTextButton.setAttribute("state", false);
-    }
+    // // alert(typeof shortcutData.attributes.others.checkInnerText)
+    // if(shortcutData.attributes.others.checkInnerText){
+    //   // alert(1)
+    //   onOffInnerTextButton.setAttribute("state", true);
+    // }else{
+    //   // alert(2)
+    //   onOffInnerTextButton.setAttribute("state", false);
+    // }
 
 
     let improveButton = document.createElement("BUTTON");
@@ -143,15 +150,15 @@ function createShortcutPanelRow(shortcutData){
     updateKeySequenceButton.setAttribute("class", "update shortcut");
     updateKeySequenceButton.setAttribute("value", shortcutData.shortcut);
 
-    let amountOfSkipableAttribiutes = document.createElement("INPUT");
-    amountOfSkipableAttribiutes.setAttribute("value", shortcutData.options.maxAmonutOfAttribiutesToSkip || "0");
-    amountOfSkipableAttribiutes.setAttribute("type", "text");
-    amountOfSkipableAttribiutes.setAttribute("id", "max skippable attribiutes "+ shortcutData.shortcut);
+    // let amountOfSkipableAttribiutes = document.createElement("INPUT");
+    // amountOfSkipableAttribiutes.setAttribute("value", shortcutData.options.maxAmonutOfAttribiutesToSkip || "0");
+    // amountOfSkipableAttribiutes.setAttribute("type", "text");
+    // amountOfSkipableAttribiutes.setAttribute("id", "max skippable attribiutes "+ shortcutData.shortcut);
 
-    let updateSkipableAttribiutesAmountButton = document.createElement("BUTTON");
-    updateSkipableAttribiutesAmountButton.innerText = "update skippable attrs amount"
-    updateSkipableAttribiutesAmountButton.setAttribute("class", "update skippable attrs amount");
-    updateSkipableAttribiutesAmountButton.setAttribute("value", shortcutData.shortcut);
+    // let updateSkipableAttribiutesAmountButton = document.createElement("BUTTON");
+    // updateSkipableAttribiutesAmountButton.innerText = "update skippable attrs amount"
+    // updateSkipableAttribiutesAmountButton.setAttribute("class", "update skippable attrs amount");
+    // updateSkipableAttribiutesAmountButton.setAttribute("value", shortcutData.shortcut);
 
     
     newNode.appendChild(enableButton)
@@ -161,11 +168,11 @@ function createShortcutPanelRow(shortcutData){
     newNode.appendChild(deleteButton)
     newNode.appendChild(indexInputField)
     newNode.appendChild(indexSubmitButton)
-    newNode.appendChild(onOffInnerTextButton)
+    // newNode.appendChild(onOffInnerTextButton)
     newNode.appendChild(improveButton)
     newNode.appendChild(updateKeySequenceButton)
-    newNode.appendChild(amountOfSkipableAttribiutes)
-    newNode.appendChild(updateSkipableAttribiutesAmountButton)
+    // newNode.appendChild(amountOfSkipableAttribiutes)
+    // newNode.appendChild(updateSkipableAttribiutesAmountButton)
 
     enableButton.addEventListener('click', function() {
         const currState = enableButton.getAttribute("shortcut-enabled");
@@ -194,20 +201,20 @@ function createShortcutPanelRow(shortcutData){
       onclick_changeIndex( shortcutData.shortcut, indexInput.value)
     }, false);
 
-    onOffInnerTextButton.addEventListener('click', function() {
-      // alert(onOffInnerTextButton.getAttribute("state"))
-      // onclick_checkInnertext( shortcutData.shortcut, onOffInnerTextButton.getAttribute("state"))
+    // onOffInnerTextButton.addEventListener('click', function() {
+    //   // alert(onOffInnerTextButton.getAttribute("state"))
+    //   // onclick_checkInnertext( shortcutData.shortcut, onOffInnerTextButton.getAttribute("state"))
       
-      if(onOffInnerTextButton.getAttribute("state") === "true" ){
-        onclick_checkInnertext( shortcutData.shortcut,  false)
-        onOffInnerTextButton.setAttribute("state", false);
-      }else{
-        onclick_checkInnertext( shortcutData.shortcut,  true)
-        onOffInnerTextButton.setAttribute("state", true);
-      }
+    //   if(onOffInnerTextButton.getAttribute("state") === "true" ){
+    //     onclick_checkInnertext( shortcutData.shortcut,  false)
+    //     onOffInnerTextButton.setAttribute("state", false);
+    //   }else{
+    //     onclick_checkInnertext( shortcutData.shortcut,  true)
+    //     onOffInnerTextButton.setAttribute("state", true);
+    //   }
 
 
-    }, false);
+    // }, false);
 
     improveButton.addEventListener('click', function() {
       onclick_newDoubleShortcut( shortcutData.shortcut)
@@ -218,10 +225,10 @@ function createShortcutPanelRow(shortcutData){
     }, false);
 
 
-     updateSkipableAttribiutesAmountButton.addEventListener('click', function() {
-      const amountInput = document.getElementById("max skippable attribiutes "+ shortcutData.shortcut)
-      onclick_changeskippableAmount( shortcutData.shortcut, amountInput.value)
-    }, false);
+    //  updateSkipableAttribiutesAmountButton.addEventListener('click', function() {
+    //   const amountInput = document.getElementById("max skippable attribiutes "+ shortcutData.shortcut)
+    //   onclick_changeskippableAmount( shortcutData.shortcut, amountInput.value)
+    // }, false);
 
 
     return newNode;
@@ -255,8 +262,6 @@ async function updateShortcut(shortcut, fields, newValue){
       }
     }
   })
-
-
 }
 
 /// creating shortcut /// /// creating shortcut /// /// creating shortcut /// /// creating shortcut /// 
@@ -322,7 +327,14 @@ async function createShortcutsBoard(tabs) {
 
 
 /// OnClick functions ////// OnClick functions ////// OnClick functions ////// OnClick functions ///
-function onclick_newShortcut () {
+async function onclick_newShortcut () {
+  
+  (async () => {
+    const src = chrome.runtime.getURL("common.js");
+    const contentMain = await import(src);
+    contentMain.main();
+  })();
+
   changeInsertingMode(insertingShortcutModes.new)
   showMessage("enter key sequence, then press ENTER. Once this popup dissaper, click on element you want to be shortcutted")
 }
@@ -369,6 +381,13 @@ function onclick_onOffLocal () {
   sendMessageToContent(ON_OFF_LOCAL_MSG)
 }
 
+
+function onclick_openSettings () {
+ chrome.tabs.create({
+      url: 'settings.html'
+    });
+}
+
 function onclick_showShortcuts () {
   sendMessageToContent(GET_SHORTCUTS)
 }
@@ -410,7 +429,6 @@ function onclick_updatekeySequence (shortcut) {
   
   oldShortcut = shortcut;
   changeInsertingMode(insertingShortcutModes.update);
-
 }
 
 function onclick_enableDisableShortcut (shortcut, currState) {
@@ -432,7 +450,7 @@ function onclick_resetStorage () {
 
 function onclick_deleteShortcut (shortcut) {
   sendMessageToContent(DELETE_SHORTCUTS_MSG + REQUEST_SEPARATOR + shortcut)
-  sendMessageToContent(UPDATE_CACHE)
+  // sendMessageToContent(UPDATE_CACHE)
 }
 
 async function onclick_updateDesc (shortcut, desc) {
@@ -446,7 +464,7 @@ async function onclick_changeIndex(shortcut, ind){
 
   await updateShortcut(shortcut, ["options", "elementIndex"], ind)
   showMessage("updated index")
-  sendMessageToContent(UPDATE_CACHE)
+  // sendMessageToContent(UPDATE_CACHE)
 
 }
 
@@ -454,7 +472,7 @@ async function onclick_checkInnertext (shortcut, newValue) {
 
   await updateShortcut(shortcut, ["attributes", "others", "checkInnerText"], newValue)
   showMessage("consider inner text changged to: " + newValue)
-  sendMessageToContent(UPDATE_CACHE)
+  // sendMessageToContent(UPDATE_CACHE)
 
 }
 
@@ -463,7 +481,7 @@ async function onclick_changeskippableAmount(shortcut, amount){
   
   await updateShortcut(shortcut, ["options", "maxAmonutOfAttribiutesToSkip"], +amount)
   showMessage("updated amount to " + amount)
-  sendMessageToContent(UPDATE_CACHE)
+  // sendMessageToContent(UPDATE_CACHE)
 
 }
 
@@ -475,6 +493,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('create package button').addEventListener('click', onclick_createPackage, false)
     document.getElementById('copy package').addEventListener('click', onclick_copyPackage, false)
     document.getElementById('on/off button local').addEventListener('click', onclick_onOffLocal, false)
+    document.getElementById('settings button').addEventListener('click', onclick_openSettings, false)
     document.getElementById('reset storage').addEventListener('click', onclick_resetStorage, false)
     document.getElementById('show shortcuts raw').addEventListener('click', onclick_showShortcuts, false)
     document.getElementById('package input submit button').addEventListener('click', onclick_LoadPackage, false)
@@ -533,12 +552,21 @@ window.addEventListener('load', async (event) => {
 
 })
 
-// refaktor zapisywania skrótów -- 
-
-// alternative shortcuts
-
 // try to make simple background page 
 // https://github.com/shama/letswritecode/tree/master/how-to-make-chrome-extensions/bear
+// dodaj tam zeby sie wyswetiallo mniej wiecej co i jak, nie musi jeszcze dzialac, nie musi byc dodatkowych ustawien
+//    niech bedzie latwo jakos edytowac ten zapis, np. zeby checki na "consider" albo "nie cosider" inner txt, 
+//    zeby to bylo ladnie w polach wypisane
+
+//  ale niech beda z boku klikalne taby (jak w tym co mam do shortcutow)
+
+// merguj to z mainem
+
+// refactor zeby cache sie aktualizowac "storage.onChanged" bo jest taka opcja
+
+
+// alternative shortcuts  --  pamietaj pobrac z maina jak to wyglada i od nowa robic
+
 
 
 // jak rozwiazqac problem mlodego dzbana....
