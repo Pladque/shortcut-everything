@@ -14,5 +14,11 @@
       "default_popup": "popup.html"
     },
 
-    "permissions": ["tabs", "storage"]
+    "permissions": ["tabs", "storage"],
+
+    "web_accessible_resources": [{
+     "resources": ["common.js"],
+    "matches": ["<all_urls>"]
+    }]
+
   }

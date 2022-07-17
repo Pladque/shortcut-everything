@@ -1,5 +1,4 @@
 //// GLOBAL VALUES ///////// GLOBAL VALUES ///////// GLOBAL VALUES ///////// GLOBAL VALUES /////
-
 var READ_ACTIVE = true;
 var isExtensionEnabled = true;
 let autoCheckInnerTextChange = true;
@@ -36,6 +35,11 @@ const readLocalStorage = async (key) => {
       });
     });
   };
+
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+     // alert("change recived! 1");    // when changing in popup
+    updateCache();
+});
 
 // clears only local storage (no cache update)
 const clearStorage = async(msg) => {
@@ -649,9 +653,16 @@ async function DeleteShortcut(shortcutToDelete){
 
 }
 
-async function enableDisableShortcut(shortcut){
+async function enableDisableShortcut(shortcut, site = null){
+  alert(site)
+  
+  if(site === null){
+    site = getSiteUrlIdentifier()
+  }
+  alert(site)
+
   try {
-    presentShortcuts = await readLocalStorage(getSiteUrlIdentifier()).catch(e => {
+    presentShortcuts = await readLocalStorage(site).catch(e => {
       console.log(e);
   });
   } catch (error) {
@@ -676,6 +687,7 @@ async function enableDisableShortcut(shortcut){
 
 // Requests listener
 chrome.runtime.onMessage.addListener(async function(request){
+
   if(matchRequest(request, GET_SHORTCUTS) ){
     const data = await readLocalStorage(getSiteUrlIdentifier())
     alert(JSON.stringify(data))
@@ -712,9 +724,14 @@ chrome.runtime.onMessage.addListener(async function(request){
     updateCache();
 
   }else if(matchRequest(request, ENABLE_DISABLE_SHORTCUT)){
-
-    const shortcut = request.split(REQUEST_SEPARATOR)[1];
-    enableDisableShortcut(shortcut);
+    const requestParts =  request.split(REQUEST_SEPARATOR)
+    const shortcut = requestParts[1];
+    if(shortcut.length===3){
+      const site = requestParts[2]
+      enableDisableShortcut(shortcut, site);
+    }else{
+      enableDisableShortcut(shortcut);
+    }
 
   }
   else{
