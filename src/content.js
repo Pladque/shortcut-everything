@@ -1,5 +1,4 @@
 //// GLOBAL VALUES ///////// GLOBAL VALUES ///////// GLOBAL VALUES ///////// GLOBAL VALUES /////
-
 var READ_ACTIVE = true;
 var isExtensionEnabled = true;
 let autoCheckInnerTextChange = true;
@@ -36,6 +35,11 @@ const readLocalStorage = async (key) => {
       });
     });
   };
+
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+     // alert("change recived! 1");    // when changing in popup
+    updateCache();
+});
 
 // clears only local storage (no cache update)
 const clearStorage = async(msg) => {

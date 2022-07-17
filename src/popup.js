@@ -1,3 +1,5 @@
+
+
 // Request messages //// Request messages //// Request messages //
 // @WARGNIGN: any word cannot be prefix of another
 const REQUEST_SEPARATOR = "_";
@@ -25,6 +27,7 @@ function changeInsertingMode(newMode){
 let oldShortcut = "";
 
 
+
 // STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///
 const readLocalStorage = async (key) => {
     return new Promise((resolve, reject) => {
@@ -37,6 +40,10 @@ const readLocalStorage = async (key) => {
       });
     });
   };
+
+//   chrome.storage.onChanged.addListener(function(changes, namespace) {
+//      alert("change recived! 2");
+// });
 
 // saves to local storage
 async function saveToLocalStorage(name, obj){
@@ -320,7 +327,14 @@ async function createShortcutsBoard(tabs) {
 
 
 /// OnClick functions ////// OnClick functions ////// OnClick functions ////// OnClick functions ///
-function onclick_newShortcut () {
+async function onclick_newShortcut () {
+  
+  (async () => {
+    const src = chrome.runtime.getURL("common.js");
+    const contentMain = await import(src);
+    contentMain.main();
+  })();
+
   changeInsertingMode(insertingShortcutModes.new)
   showMessage("enter key sequence, then press ENTER. Once this popup dissaper, click on element you want to be shortcutted")
 }
@@ -436,7 +450,7 @@ function onclick_resetStorage () {
 
 function onclick_deleteShortcut (shortcut) {
   sendMessageToContent(DELETE_SHORTCUTS_MSG + REQUEST_SEPARATOR + shortcut)
-  sendMessageToContent(UPDATE_CACHE)
+  // sendMessageToContent(UPDATE_CACHE)
 }
 
 async function onclick_updateDesc (shortcut, desc) {
@@ -450,7 +464,7 @@ async function onclick_changeIndex(shortcut, ind){
 
   await updateShortcut(shortcut, ["options", "elementIndex"], ind)
   showMessage("updated index")
-  sendMessageToContent(UPDATE_CACHE)
+  // sendMessageToContent(UPDATE_CACHE)
 
 }
 
@@ -458,7 +472,7 @@ async function onclick_checkInnertext (shortcut, newValue) {
 
   await updateShortcut(shortcut, ["attributes", "others", "checkInnerText"], newValue)
   showMessage("consider inner text changged to: " + newValue)
-  sendMessageToContent(UPDATE_CACHE)
+  // sendMessageToContent(UPDATE_CACHE)
 
 }
 
@@ -467,7 +481,7 @@ async function onclick_changeskippableAmount(shortcut, amount){
   
   await updateShortcut(shortcut, ["options", "maxAmonutOfAttribiutesToSkip"], +amount)
   showMessage("updated amount to " + amount)
-  sendMessageToContent(UPDATE_CACHE)
+  // sendMessageToContent(UPDATE_CACHE)
 
 }
 

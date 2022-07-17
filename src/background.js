@@ -1,31 +1,13 @@
+/// STORAGE ////// STORAGE ////// STORAGE ////// STORAGE ////// STORAGE ////// STORAGE ///
 
-
-const REQUEST_SEPARATOR = "_";
-const DELETE_SHORTCUTS_MSG = "Delete";
-const CLEAR_STORAGE_MSG = "RESET-FULL"          
-const CREATE_NEW_SHOWRTCUT_MSG = "new-shortcut" 
-const CREATE_NEW_DOUBLE_SHOWRTCUT_MSG = "new-double-shortcut" 
-const ON_OFF_LOCAL_MSG = "onOff-local"         
-const GET_SHORTCUTS = "show-shortcuts"         
-const UPDATE_CACHE = "update-cache"
-const ENABLE_DISABLE_SHORTCUT = "enable-disable-shortcut"
-
-
-const ATTRIBIUTES_TO_SKIP = ["href", "src"]  
-const NOT_WORKING_TAGS = ["svg", "ellipse", "path"]
-const TAGS_TO_SELECT = ["input"]
-const SEARCH_FULL = true
-
-
-
-
+// reads local storage and returns value
 const readLocalStorage = async (key) => {
     return new Promise((resolve, reject) => {
       chrome.storage.local.get([key], function (result) {
         if (result[key] === undefined) {
           reject();
         } else {
-            resolve(result[key] );
+          resolve(result[key] );
         }
       });
     });
@@ -42,29 +24,23 @@ async function saveToLocalStorage(name, obj){
       console.error(chrome.runtime.lastError.message);
     }
   });
-
 }
 
-
+/// helpers ////// helpers ////// helpers ////// helpers ////// helpers ////// helpers ///
 function showMessage(message){
   document.getElementById('message').innerText = message
 }
 
-async function onOffSite(site){
-  let siteData = await readLocalStorage(site).catch(e => {
-    console.log(e);
-  });
+function getIndexOfShortcut(shortcutrsArr, shortcut){
+  let index = -1;
+  for(let i =0; i< shortcutrsArr.length; i++){
+    if(shortcutrsArr[i]["shortcut"] === shortcut){
+      index = i;
+      break;
+    }
+  }
 
-  siteData.info.enabled = !siteData.info.enabled
-  isExtensionEnabled = siteData.info.enabled;
-  const updatedRecord = siteData;
-
-  await saveToLocalStorage(site, updatedRecord).catch(e => {
-    console.log(e);
-  });;
-
-  alert("extension for this site is enabled: " + siteData.info.enabled)
-
+  return index
 }
 
 async function updateShortcut(shortcut, fields, newValue, url){
@@ -95,7 +71,8 @@ async function updateShortcut(shortcut, fields, newValue, url){
   })
 }
 
-// ON CLICKS //
+
+/// ON CLICKS ////// ON CLICKS ////// ON CLICKS ////// ON CLICKS ////// ON CLICKS ////// ON CLICKS ///
 async function onclick_updateDesc (shortcut, desc, site) {
     showMessage("updated description on "+ site )
     await updateShortcut(shortcut, ["desc"], desc, site)
@@ -112,6 +89,17 @@ async function onclick_enableDisableShortcut (shortcut, currState, site) {
 
 }
 
+async function onclick_checkInnertext (shortcut, newValue, site) {
+
+  await updateShortcut(shortcut, ["attributes", "others", "checkInnerText"], newValue, site)
+  showMessage("consider inner text changged to: " + newValue)
+}
+
+async function onclick_changeInnerText(shortcut, newText, site){
+  await updateShortcut(shortcut, ["attributes", "others", "innerText"], newText, site)
+  showMessage("inner text changged to: " + newText)
+}
+
 async function onclick_deleteShortcut( shortcut, site){
   DeleteShortcut(shortcut, site);
   showMessage("deleted")
@@ -122,18 +110,29 @@ async function onclick_onOffSite(site){
   showMessage("site " + site + " has beed turned")
 }
 
-////
+async function onclick_changeskippableAmount(shortcut, amount, site){
+  await updateShortcut(shortcut, ["options", "maxAmonutOfAttribiutesToSkip"], +amount, site)
+  showMessage("updated amount to " + amount)
+  // sendMessageToContent(UPDATE_CACHE)
+}
 
-function getIndexOfShortcut(shortcutrsArr, shortcut){
-  let index = -1;
-  for(let i =0; i< shortcutrsArr.length; i++){
-    if(shortcutrsArr[i]["shortcut"] === shortcut){
-      index = i;
-      break;
-    }
-  }
+/// ////// ////// ////// ////// ////// ////// ////// ////// ////// ////// ////// ////// ///
 
-  return index
+async function onOffSite(site){
+  let siteData = await readLocalStorage(site).catch(e => {
+    console.log(e);
+  });
+
+  siteData.info.enabled = !siteData.info.enabled
+  isExtensionEnabled = siteData.info.enabled;
+  const updatedRecord = siteData;
+
+  await saveToLocalStorage(site, updatedRecord).catch(e => {
+    console.log(e);
+  });;
+
+  alert("extension for this site is enabled: " + siteData.info.enabled)
+
 }
 
 
@@ -187,7 +186,6 @@ function createShortcutPanelRow(shortcutData, site){
     enableButton.setAttribute("shortcut-enabled", shortcutData.options.enabled)
     enableButton.setAttribute("class", "enable button");
     enableButton.setAttribute("value", shortcutData.shortcut)
-    // enableButton.setAttribute("site", site)
 
     var name = document.createTextNode(shortcutData.shortcut)
 
@@ -202,15 +200,11 @@ function createShortcutPanelRow(shortcutData, site){
     descSubmitButton.setAttribute("class", "change desc button");
     descSubmitButton.setAttribute("value", shortcutData.shortcut)
     
-    // descSubmitButton.setAttribute("site", site);
     
     let deleteButton = document.createElement("BUTTON");
     deleteButton.innerText = "delete"
     deleteButton.setAttribute("class", "delete button");
     deleteButton.setAttribute("value", shortcutData.shortcut);
-
-    // deleteButton.setAttribute("site", site);
-
 
 
     let onOffInnerTextButton = document.createElement("BUTTON");
@@ -224,7 +218,15 @@ function createShortcutPanelRow(shortcutData, site){
       onOffInnerTextButton.setAttribute("state", false);
     }
 
+    let innerTextInputField = document.createElement("INPUT");
+    innerTextInputField.setAttribute("value", shortcutData.attributes.others.innerText || "");
+    innerTextInputField.setAttribute("type", "text");
+    innerTextInputField.setAttribute("id", "innerText "+ shortcutData.shortcut);
 
+    let updateInnerTextButton = document.createElement("BUTTON");
+    updateInnerTextButton.innerText = "update inner text"
+    updateInnerTextButton.setAttribute("class", "update inner text");
+    updateInnerTextButton.setAttribute("value", shortcutData.shortcut);
 
     let amountOfSkipableAttribiutes = document.createElement("INPUT");
     amountOfSkipableAttribiutes.setAttribute("value", shortcutData.options.maxAmonutOfAttribiutesToSkip || "0");
@@ -235,7 +237,6 @@ function createShortcutPanelRow(shortcutData, site){
     updateSkipableAttribiutesAmountButton.innerText = "update skippable attrs amount"
     updateSkipableAttribiutesAmountButton.setAttribute("class", "update skippable attrs amount");
     updateSkipableAttribiutesAmountButton.setAttribute("value", shortcutData.shortcut);
-
     
     newNode.appendChild(enableButton)
     newNode.appendChild(name)
@@ -243,6 +244,8 @@ function createShortcutPanelRow(shortcutData, site){
     newNode.appendChild(descSubmitButton)
     newNode.appendChild(deleteButton)
     newNode.appendChild(onOffInnerTextButton)
+    newNode.appendChild(innerTextInputField)
+    newNode.appendChild(updateInnerTextButton)
     newNode.appendChild(amountOfSkipableAttribiutes)
     newNode.appendChild(updateSkipableAttribiutesAmountButton)
 
@@ -262,6 +265,12 @@ function createShortcutPanelRow(shortcutData, site){
     deleteButton.addEventListener('click', function() {
         onclick_deleteShortcut( shortcutData.shortcut, site)
       }, false);
+   
+    updateInnerTextButton.addEventListener('click', function() {
+      const newText =document.getElementById("innerText "+ shortcutData.shortcut).value
+      onclick_changeInnerText(shortcutData.shortcut, newText, site)
+    }, false);
+
 
     descSubmitButton.addEventListener('click', function() {
       const descInputField = document.getElementById("shortcut desc " + shortcutData.shortcut)
@@ -271,10 +280,10 @@ function createShortcutPanelRow(shortcutData, site){
     onOffInnerTextButton.addEventListener('click', function() {
       
       if(onOffInnerTextButton.getAttribute("state") === "true" ){
-        onclick_checkInnertext( shortcutData.shortcut,  false)
+        onclick_checkInnertext( shortcutData.shortcut,  false, site)
         onOffInnerTextButton.setAttribute("state", false);
       }else{
-        onclick_checkInnertext( shortcutData.shortcut,  true)
+        onclick_checkInnertext( shortcutData.shortcut,  true, site)
         onOffInnerTextButton.setAttribute("state", true);
       }
 
@@ -283,7 +292,7 @@ function createShortcutPanelRow(shortcutData, site){
 
      updateSkipableAttribiutesAmountButton.addEventListener('click', function() {
       const amountInput = document.getElementById("max skippable attribiutes "+ shortcutData.shortcut)
-      onclick_changeskippableAmount( shortcutData.shortcut, amountInput.value)
+      onclick_changeskippableAmount( shortcutData.shortcut, amountInput.value, site)
     }, false);
 
 
@@ -310,7 +319,7 @@ async function createShortcutsBoard(tabs) {
             if(data.data.length >= 1){
 
                 var node = document.getElementById("shortcuts collection");
-                var newTitle = document.createElement('h1');
+                var newTitle = document.createElement('h2');
                 newTitle.innerHTML = url;
 
                 node.appendChild(newTitle)
@@ -336,16 +345,15 @@ async function createShortcutsBoard(tabs) {
     });
 }
 
-// INIT actions
+/// INIT actions ////// INIT actions ////// INIT actions ////// INIT actions ////// INIT actions ////// INIT actions ///
 window.addEventListener('load', async (event) => {
-
-
  try {
     var query = { active: true, currentWindow: true };
     chrome.tabs.query(query, createShortcutsBoard);
-  
   } catch (err) {
   }
-
 })
 
+// to do dzis
+//    zeby dzialaly wszystkie przyciski tuytaj
+//    refactor, zeby byl updatecache "onUpdate" na Storage
