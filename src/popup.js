@@ -285,11 +285,11 @@ async function createShortcutsBoard(tabs) {
 /// OnClick functions ////// OnClick functions ////// OnClick functions ////// OnClick functions ///
 async function onclick_newShortcut () {
   
-  (async () => {
-    const src = chrome.runtime.getURL("common.js");
-    const contentMain = await import(src);
-    contentMain.main();
-  })();
+  // (async () => {
+  //   const src = chrome.runtime.getURL("common.js");
+  //   const contentMain = await import(src);
+  //   contentMain.main();
+  // })();
 
   changeInsertingMode(insertingShortcutModes.new)
   showMessage("enter key sequence, then press ENTER. Once this popup dissaper, click on element you want to be shortcutted")

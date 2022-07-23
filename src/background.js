@@ -345,7 +345,12 @@ async function createShortcutsBoard(tabs) {
                 
                 
                 for(let i = 0; i< data.data.length; i++){
-                    node.appendChild(createShortcutPanelRow(data.data[i], url))
+                  node.appendChild(createShortcutPanelRow(data.data[i], url))
+                  
+                  var rawData = document.createElement('div');
+                  rawData.innerHTML =JSON.stringify( data.data[i]);
+                  node.appendChild(rawData)
+
                 }
                 
             }

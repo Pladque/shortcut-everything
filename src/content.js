@@ -397,7 +397,16 @@ function getElementWithProperties(elementProperties, fullSearch){
   matchingElements.sort( compareSearchResults );
   
   if(matchingElements.length >=1){
-    return  matchingElements[Math.min(indexOfWantetElement, matchingElements.length-1)].element;
+    let wantedIndexFinal = indexOfWantetElement;
+
+    // alert(indexOfWantetElement)
+    if(indexOfWantetElement < 0){
+      wantedIndexFinal = Math.max(0, matchingElements.length+indexOfWantetElement);
+    }
+
+    // alert(wantedIndexFinal);
+    
+    return  matchingElements[Math.min(wantedIndexFinal, matchingElements.length-1)].element;
   }
 
   return null
