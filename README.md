@@ -15,7 +15,7 @@ A chrome extension that allows you to create shortcut on websites and improve yo
 ## 0. Link to webstore???
  Waiting to be approved :p
 ## 1. How to add shortcut
-  Click on big button with "+". Then, eneter your key sequence (you can see current key sequence in field below "Current Key Sequence"). Once you do this, click "ENTER" (enter key cannot be part of shortcut!!). Once popup is closed (should close after "enter") click on element you want to be shortcutted. Make sure you are following rules listed in "Tips" above
+  Click on big button with "Add". Then, eneter your key sequence (you can see current key sequence in field below "Current Key Sequence"). Once you do this, click "ENTER" (enter key cannot be part of shortcut!!). Once popup is closed (should close after "enter") click on element you want to be shortcutted. Make sure you are following rules listed in "Tips" above
 ## 2. My shortcut doesn't work, why?
 
   a) Is there a message that "connot find element"?
