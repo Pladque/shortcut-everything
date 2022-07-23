@@ -59,7 +59,7 @@ Determiantes how many attribiutes alghorythm can skipp (not consieder) while sea
 How to use
 Incement value in last input field (one before "update skippable attr count" button) and hit that button. Refresh page and check if it works. 
 
-##Index of shortcut
+## Index of shortcut
 If there are similar elemetns on website, anbd you want to "click" secound one, you can increase shortcuts index from 0 to 1 to get this one. 
 In order to get last element, use -1, to get element before last elment use -2, and so on...
 
