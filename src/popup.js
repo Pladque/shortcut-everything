@@ -23,6 +23,7 @@ const insertingShortcutModes = {
 
 let insertingShortcutMode = insertingShortcutModes.none
 let darkmodeEnabled;
+let collapsableLoaded = false;
 function changeInsertingMode(newMode){
   insertingShortcutMode = newMode;
 }
@@ -68,11 +69,21 @@ function showMessage(message){
   document.getElementById('message').innerText = message
 }
 
+function createTitle(shortcutData){
+    var newNode = document.createElement('button');
+    newNode.setAttribute("type", "button");
+    newNode.setAttribute("class", "collapsible");
+    newNode.innerText = shortcutData.shortcut + " | " + shortcutData.desc;
+
+    return newNode;
+}
+
 function createShortcutPanelRow(shortcutData){
-    var newNode = document.createElement('p');
-    newNode.setAttribute("style", "border: 2px solid #ffffff; border-radius: 25px; padding: 20px;")
-    newNode.setAttribute("value", shortcutData.shortcut)
-    newNode.setAttribute("class", "shortcut")
+
+    var newNode = document.createElement('div');
+    // newNode.setAttribute("style", "border: 2px solid #ffffff; border-radius: 25px; padding: 20px;")
+    // newNode.setAttribute("value", shortcutData.shortcut)
+    newNode.setAttribute("class", "content")
 
     let enableButton = document.createElement("BUTTON");
 
@@ -85,7 +96,7 @@ function createShortcutPanelRow(shortcutData){
     enableButton.setAttribute("class", "enable button");
     enableButton.setAttribute("value", shortcutData.shortcut)
 
-    var name = document.createTextNode(shortcutData.shortcut)
+    // var name = document.createTextNode(shortcutData.shortcut)
 
     var desbInputField = document.createElement("INPUT");
     desbInputField.setAttribute("type", "text");
@@ -132,7 +143,7 @@ function createShortcutPanelRow(shortcutData){
     updateKeySequenceButton.setAttribute("value", shortcutData.shortcut);
 
     newNode.appendChild(enableButton)
-    newNode.appendChild(name)
+    // newNode.appendChild(name)
     newNode.appendChild(desbInputField)
     newNode.appendChild(descSubmitButton)
     newNode.appendChild(deleteButton)
@@ -264,6 +275,7 @@ async function createShortcutsBoard(tabs) {
   var node = document.getElementById("shortcuts collection");
 
   for(let i = 0; i< data.data.length; i++){
+    node.appendChild(createTitle(data.data[i]))
     node.appendChild(createShortcutPanelRow(data.data[i]))
   }
     
@@ -424,21 +436,23 @@ async function onclick_changeskippableAmount(shortcut, amount){
   showMessage("updated amount to " + amount)
 }
 
-////// Listeners ///////// Listeners ///////// Listeners ///////// Listeners ///
-let improvingShortcut = false
-document.addEventListener('DOMContentLoaded', function () {
+async function onclick_switchMode(e){
+  darkmodeEnabled = !darkmodeEnabled;
+  await manageDarkMode();
+}
 
-    document.getElementById('new_shortcut').addEventListener('click', onclick_newShortcut, false)
-    document.getElementById('create package button').addEventListener('click', onclick_createPackage, false)
-    document.getElementById('copy package').addEventListener('click', onclick_copyPackage, false)
-    document.getElementById('on/off button local').addEventListener('click', onclick_onOffLocal, false)
-    document.getElementById('settings button').addEventListener('click', onclick_openSettings, false)
-    document.getElementById('reset storage').addEventListener('click', onclick_resetStorage, false)
-    document.getElementById('show shortcuts raw').addEventListener('click', onclick_showShortcuts, false)
-    document.getElementById('package input submit button').addEventListener('click', onclick_LoadPackage, false)
-    document.getElementById('dark-mode switch').addEventListener('change', switchMode, false)
+async function onclick_loadCollapsableAction(e){
+    if(collapsableLoaded){
+      return;
+    }
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+    
 
-    // Collapsable items 
     var coll = document.getElementsByClassName("collapsible");
     var i;
 
@@ -453,6 +467,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       });
     }
+
+    collapsableLoaded = true;
+}
+
+////// Listeners ///////// Listeners ///////// Listeners ///////// Listeners ///
+let improvingShortcut = false
+document.addEventListener('DOMContentLoaded', function () {
+
+    document.getElementById('new_shortcut').addEventListener('click', onclick_newShortcut, false)
+    document.getElementById('create package button').addEventListener('click', onclick_createPackage, false)
+    document.getElementById('copy package').addEventListener('click', onclick_copyPackage, false)
+    document.getElementById('on/off button local').addEventListener('click', onclick_onOffLocal, false)
+    document.getElementById('settings button').addEventListener('click', onclick_openSettings, false)
+    document.getElementById('reset storage').addEventListener('click', onclick_resetStorage, false)
+    document.getElementById('show shortcuts raw').addEventListener('click', onclick_showShortcuts, false)
+    document.getElementById('package input submit button').addEventListener('click', onclick_LoadPackage, false)
+    document.getElementById('dark-mode switch').addEventListener('change', onclick_switchMode, false)
 
 }, false)
 
@@ -498,10 +529,6 @@ document.addEventListener('keydown', async (e) =>{
 
 /// DARK MODE ////// DARK MODE ////// DARK MODE ////// DARK MODE ////// DARK MODE ////// DARK MODE ///
 
-async function switchMode(e){
-  darkmodeEnabled = !darkmodeEnabled;
-  await manageDarkMode();
-}
 
 async function manageDarkMode(){
    document.getElementById('dark-mode switch').checked = darkmodeEnabled;
@@ -559,16 +586,21 @@ async function getDarkModeSettings(){
 // INIT actions
 window.addEventListener('load', async (event) => {
 
-  darkmodeEnabled = await getDarkModeSettings();
-  manageDarkMode();
-
   try {
     var query = { active: true, currentWindow: true };
-    chrome.tabs.query(query, createShortcutsBoard);
+    await chrome.tabs.query(query, createShortcutsBoard);
   
   } catch (err) {
   }
 
-})
 
-// alternative shortcuts  --  pamietaj pobrac z maina jak to wyglada i od nowa robic
+  darkmodeEnabled = await getDarkModeSettings();
+  await manageDarkMode();
+
+
+  var colls = document.getElementsByClassName("collapsible");
+  for (i = 0; i < colls.length; i++) {
+    colls[i].addEventListener('click', onclick_loadCollapsableAction, false);
+  }
+
+})
