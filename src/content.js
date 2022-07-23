@@ -308,6 +308,24 @@ function getURL(){
   return window.location.href
 }
 
+// returns true if the element or one of its parents has the class classname
+async function hasSomeParentTheClass(element, classname) {
+     //
+    // If we are here we didn't find the searched class in any parents node
+    //
+    if (!element.parentNode) return false;
+    //
+    // If the current node has the class return true, otherwise we will search
+    // it in the parent node
+    //
+    if(element.getAttribute("class") === classname){
+      // alert(classname);
+      return true;
+    }
+    // if (element.className.split(' ').indexOf(classname)>=0) return true;
+
+    return hasSomeParentTheClass(element.parentNode, classname);
+}
 
 // @DESC: based on properies/attributes (like for example class name) returns matched element from
 //        currently open webpage
@@ -380,11 +398,25 @@ function getElementWithProperties(elementProperties, fullSearch){
 
       if(onlyElementInnerText(allElements[i]) === innerText || checkInnerText===false){
 
+        // TESTING, INCREASING DOKLADNOSC 
+        if(elementProperties.attributes.hasParentWithClass){
+          if(hasSomeParentTheClass(allElements[i], elementProperties.attributes.hasParentWithClass)){
+            matchingElements.push({
+              "noMatchingFields": noMatchingFields,
+              "element": allElements[i],
+            })
 
-         matchingElements.push({
-          "noMatchingFields": noMatchingFields,
-          "element": allElements[i],
-        })
+          }
+
+
+        }else
+        /////////////////////
+        {
+          matchingElements.push({
+              "noMatchingFields": noMatchingFields,
+              "element": allElements[i],
+            })
+        }
 
       }
     }
@@ -399,13 +431,10 @@ function getElementWithProperties(elementProperties, fullSearch){
   if(matchingElements.length >=1){
     let wantedIndexFinal = indexOfWantetElement;
 
-    // alert(indexOfWantetElement)
     if(indexOfWantetElement < 0){
       wantedIndexFinal = Math.max(0, matchingElements.length+indexOfWantetElement);
     }
 
-    // alert(wantedIndexFinal);
-    
     return  matchingElements[Math.min(wantedIndexFinal, matchingElements.length-1)].element;
   }
 
@@ -434,6 +463,7 @@ function createArrFromAttribiutes(target){
 // @TODO: make sth like "attributesToSkip" and put href inside, so in the future
 //        we were able to exclude more attributes easly            
 async function getButtonInfo(e){
+  
   e = e || window.event;
   var target = e.target || e.srcElement
   
@@ -451,6 +481,17 @@ async function getButtonInfo(e){
   button_data.tagName = target.tagName
   button_data.others = {checkInnerText: true};
   button_data.others.innerText = onlyElementInnerText(orginalTarget);
+
+  // to test if it makes sens
+  // IT DOES!!!
+  // add it as a field in background, so user will be able ot add this manually (for now)
+  // if string is empty, then igorne
+  alert("TODO 489 line in content")
+  button_data.hasParentWithClass = "style-scope ytd-section-list-renderer";
+  alert(1);
+  const temp = await hasSomeParentTheClass(target, "style-scope ytd-section-list-renderer")
+  alert(temp);
+  alert(2);
 
   return button_data;
 }
@@ -770,3 +811,6 @@ chrome.runtime.onMessage.addListener(async function(request){
 window.addEventListener('load', async (event) => {
   updateCache()
 })
+
+// todo
+//  finish "hasParent" ipmrpovement!!
