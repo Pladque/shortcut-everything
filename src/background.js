@@ -1,3 +1,6 @@
+const STORAGE_RESERVED_NAMES_PREFIX = "$@$"
+
+
 /// STORAGE ////// STORAGE ////// STORAGE ////// STORAGE ////// STORAGE ////// STORAGE ///
 
 // reads local storage and returns value
@@ -307,6 +310,12 @@ async function createShortcutsBoard(tabs) {
 
         for(let site_ind =0; site_ind< allKeys.length; site_ind++){
             const url = allKeys[site_ind]
+          
+            if(url.substr(0, STORAGE_RESERVED_NAMES_PREFIX.length) === STORAGE_RESERVED_NAMES_PREFIX){
+              continue;
+            }
+
+
             const data = await readLocalStorage(url).catch(e => {
                 console.error(e);
             });
@@ -316,6 +325,7 @@ async function createShortcutsBoard(tabs) {
             }
             
             
+
             if(data.data.length >= 1){
 
                 var node = document.getElementById("shortcuts collection");
