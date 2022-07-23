@@ -353,7 +353,3 @@ window.addEventListener('load', async (event) => {
   } catch (err) {
   }
 })
-
-// to do dzis
-//    zeby dzialaly wszystkie przyciski tuytaj
-//    refactor, zeby byl updatecache "onUpdate" na Storage

@@ -12,6 +12,9 @@ const GET_SHORTCUTS = "show-shortcuts"          // "show-shortcuts"
 const UPDATE_CACHE = "update-cache"
 const ENABLE_DISABLE_SHORTCUT = "enable-disable-shortcut"
 
+const STORAGE_RESERVED_NAMES_PREFIX = "$@$"
+const GENERAL_SETTINGS_STORAGE_NAME = STORAGE_RESERVED_NAMES_PREFIX + "general-settings"
+
 const insertingShortcutModes = {
   "none": "none",
   "new": "new",
@@ -19,14 +22,12 @@ const insertingShortcutModes = {
 }
 
 let insertingShortcutMode = insertingShortcutModes.none
-
+let darkmodeEnabled;
 function changeInsertingMode(newMode){
   insertingShortcutMode = newMode;
 }
 
 let oldShortcut = "";
-
-
 
 // STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///// STORAGE ///
 const readLocalStorage = async (key) => {
@@ -40,10 +41,6 @@ const readLocalStorage = async (key) => {
       });
     });
   };
-
-//   chrome.storage.onChanged.addListener(function(changes, namespace) {
-//      alert("change recived! 2");
-// });
 
 // saves to local storage
 async function saveToLocalStorage(name, obj){
@@ -59,7 +56,6 @@ async function saveToLocalStorage(name, obj){
 }
 
 /// other / helpers ////// other / helpers ////// other / helpers ////// other / helpers ///
-
 function parseURL(url){
     const partlyParsed = url.split('//')  // to seperate "https://"
     const parsed = partlyParsed[1].split('/')[0]  
@@ -74,7 +70,7 @@ function showMessage(message){
 
 function createShortcutPanelRow(shortcutData){
     var newNode = document.createElement('p');
-    newNode.setAttribute("style", "background-color: aliceblue;")
+    newNode.setAttribute("style", "border: 2px solid #ffffff; border-radius: 25px; padding: 20px;")
     newNode.setAttribute("value", shortcutData.shortcut)
     newNode.setAttribute("class", "shortcut")
 
@@ -125,21 +121,6 @@ function createShortcutPanelRow(shortcutData){
     indexSubmitButton.setAttribute("class", "change index button button");
     indexSubmitButton.setAttribute("value", shortcutData.shortcut);
 
-    // let onOffInnerTextButton = document.createElement("BUTTON");
-    // onOffInnerTextButton.innerText = "on/off inner text"
-    // onOffInnerTextButton.setAttribute("class", "on/off inner text button");
-    // onOffInnerTextButton.setAttribute("value", shortcutData.shortcut);
-
-    // // alert(typeof shortcutData.attributes.others.checkInnerText)
-    // if(shortcutData.attributes.others.checkInnerText){
-    //   // alert(1)
-    //   onOffInnerTextButton.setAttribute("state", true);
-    // }else{
-    //   // alert(2)
-    //   onOffInnerTextButton.setAttribute("state", false);
-    // }
-
-
     let improveButton = document.createElement("BUTTON");
     improveButton.innerText = "improve"
     improveButton.setAttribute("class", "improve shortcut button");
@@ -150,17 +131,6 @@ function createShortcutPanelRow(shortcutData){
     updateKeySequenceButton.setAttribute("class", "update shortcut");
     updateKeySequenceButton.setAttribute("value", shortcutData.shortcut);
 
-    // let amountOfSkipableAttribiutes = document.createElement("INPUT");
-    // amountOfSkipableAttribiutes.setAttribute("value", shortcutData.options.maxAmonutOfAttribiutesToSkip || "0");
-    // amountOfSkipableAttribiutes.setAttribute("type", "text");
-    // amountOfSkipableAttribiutes.setAttribute("id", "max skippable attribiutes "+ shortcutData.shortcut);
-
-    // let updateSkipableAttribiutesAmountButton = document.createElement("BUTTON");
-    // updateSkipableAttribiutesAmountButton.innerText = "update skippable attrs amount"
-    // updateSkipableAttribiutesAmountButton.setAttribute("class", "update skippable attrs amount");
-    // updateSkipableAttribiutesAmountButton.setAttribute("value", shortcutData.shortcut);
-
-    
     newNode.appendChild(enableButton)
     newNode.appendChild(name)
     newNode.appendChild(desbInputField)
@@ -168,11 +138,8 @@ function createShortcutPanelRow(shortcutData){
     newNode.appendChild(deleteButton)
     newNode.appendChild(indexInputField)
     newNode.appendChild(indexSubmitButton)
-    // newNode.appendChild(onOffInnerTextButton)
     newNode.appendChild(improveButton)
     newNode.appendChild(updateKeySequenceButton)
-    // newNode.appendChild(amountOfSkipableAttribiutes)
-    // newNode.appendChild(updateSkipableAttribiutesAmountButton)
 
     enableButton.addEventListener('click', function() {
         const currState = enableButton.getAttribute("shortcut-enabled");
@@ -201,20 +168,6 @@ function createShortcutPanelRow(shortcutData){
       onclick_changeIndex( shortcutData.shortcut, indexInput.value)
     }, false);
 
-    // onOffInnerTextButton.addEventListener('click', function() {
-    //   // alert(onOffInnerTextButton.getAttribute("state"))
-    //   // onclick_checkInnertext( shortcutData.shortcut, onOffInnerTextButton.getAttribute("state"))
-      
-    //   if(onOffInnerTextButton.getAttribute("state") === "true" ){
-    //     onclick_checkInnertext( shortcutData.shortcut,  false)
-    //     onOffInnerTextButton.setAttribute("state", false);
-    //   }else{
-    //     onclick_checkInnertext( shortcutData.shortcut,  true)
-    //     onOffInnerTextButton.setAttribute("state", true);
-    //   }
-
-
-    // }, false);
 
     improveButton.addEventListener('click', function() {
       onclick_newDoubleShortcut( shortcutData.shortcut)
@@ -223,13 +176,6 @@ function createShortcutPanelRow(shortcutData){
     updateKeySequenceButton.addEventListener('click', function() {
       onclick_updatekeySequence( shortcutData.shortcut)
     }, false);
-
-
-    //  updateSkipableAttribiutesAmountButton.addEventListener('click', function() {
-    //   const amountInput = document.getElementById("max skippable attribiutes "+ shortcutData.shortcut)
-    //   onclick_changeskippableAmount( shortcutData.shortcut, amountInput.value)
-    // }, false);
-
 
     return newNode;
 }
@@ -300,8 +246,6 @@ function sendMessageToContent(msg){
 }
 
 
-
-
 /// shortcuts board in popup /// /// shortcuts board in popup /// /// shortcuts board in popup /// 
 
 async function createShortcutsBoard(tabs) {
@@ -310,7 +254,7 @@ async function createShortcutsBoard(tabs) {
   const url = JSON.stringify(currentTab.url)
   // alert(parseURL(url))
   const data = await readLocalStorage(parseURL(url)).catch(e => {
-    console.error(e);
+    // console.error(e);
   });
 
   if(data === undefined || data === null){
@@ -450,7 +394,6 @@ function onclick_resetStorage () {
 
 function onclick_deleteShortcut (shortcut) {
   sendMessageToContent(DELETE_SHORTCUTS_MSG + REQUEST_SEPARATOR + shortcut)
-  // sendMessageToContent(UPDATE_CACHE)
 }
 
 async function onclick_updateDesc (shortcut, desc) {
@@ -464,7 +407,6 @@ async function onclick_changeIndex(shortcut, ind){
 
   await updateShortcut(shortcut, ["options", "elementIndex"], ind)
   showMessage("updated index")
-  // sendMessageToContent(UPDATE_CACHE)
 
 }
 
@@ -472,7 +414,6 @@ async function onclick_checkInnertext (shortcut, newValue) {
 
   await updateShortcut(shortcut, ["attributes", "others", "checkInnerText"], newValue)
   showMessage("consider inner text changged to: " + newValue)
-  // sendMessageToContent(UPDATE_CACHE)
 
 }
 
@@ -481,8 +422,6 @@ async function onclick_changeskippableAmount(shortcut, amount){
   
   await updateShortcut(shortcut, ["options", "maxAmonutOfAttribiutesToSkip"], +amount)
   showMessage("updated amount to " + amount)
-  // sendMessageToContent(UPDATE_CACHE)
-
 }
 
 ////// Listeners ///////// Listeners ///////// Listeners ///////// Listeners ///
@@ -497,6 +436,23 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('reset storage').addEventListener('click', onclick_resetStorage, false)
     document.getElementById('show shortcuts raw').addEventListener('click', onclick_showShortcuts, false)
     document.getElementById('package input submit button').addEventListener('click', onclick_LoadPackage, false)
+    document.getElementById('dark-mode switch').addEventListener('change', switchMode, false)
+
+    // Collapsable items 
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
+
+    for (i = 0; i < coll.length; i++) {
+      coll[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var content = this.nextElementSibling;
+        if (content.style.display === "block") {
+          content.style.display = "none";
+        } else {
+          content.style.display = "block";
+        }
+      });
+    }
 
 }, false)
 
@@ -540,8 +496,71 @@ document.addEventListener('keydown', async (e) =>{
 
 })
 
+/// DARK MODE ////// DARK MODE ////// DARK MODE ////// DARK MODE ////// DARK MODE ////// DARK MODE ///
+
+async function switchMode(e){
+  darkmodeEnabled = !darkmodeEnabled;
+  await manageDarkMode();
+}
+
+async function manageDarkMode(){
+   document.getElementById('dark-mode switch').checked = darkmodeEnabled;
+
+   if(darkmodeEnabled){
+    darkMode();
+   }
+   else{
+    lightMode();
+   }
+
+  let darkmodeStatus = undefined;
+  try {
+    darkmodeStatus = await readLocalStorage(GENERAL_SETTINGS_STORAGE_NAME);
+  } catch (error) {
+    
+  }
+
+  let darkmodeStatusJSON =  JSON.parse(darkmodeStatus);
+  darkmodeStatusJSON.darkmode = darkmodeEnabled;
+  
+  darkmodeStatusString = JSON.stringify(darkmodeStatusJSON);
+  await saveToLocalStorage(GENERAL_SETTINGS_STORAGE_NAME,darkmodeStatusString );
+
+}
+
+function darkMode() {
+  var element = document.body;
+  var content = document.getElementById("DarkModetext");
+  element.className = "dark-mode";
+}
+function lightMode() {
+  var element = document.body;
+  var content = document.getElementById("DarkModetext");
+  element.className = "light-mode";
+}
+
+async function getDarkModeSettings(){
+  let darkmodeStatus = undefined;
+  try {
+    darkmodeStatus = await readLocalStorage(GENERAL_SETTINGS_STORAGE_NAME);
+  } catch (error) {
+    
+  }
+
+  if(darkmodeStatus === undefined){
+    let darkmodeNew = "{\"darkmode\": true}";
+    await saveToLocalStorage(GENERAL_SETTINGS_STORAGE_NAME,darkmodeNew );
+    darkmodeStatus = true;
+  }
+
+   return JSON.parse(darkmodeStatus).darkmode;
+}
+
 // INIT actions
 window.addEventListener('load', async (event) => {
+
+  darkmodeEnabled = await getDarkModeSettings();
+  manageDarkMode();
 
   try {
     var query = { active: true, currentWindow: true };
@@ -552,21 +571,4 @@ window.addEventListener('load', async (event) => {
 
 })
 
-// try to make simple background page 
-// https://github.com/shama/letswritecode/tree/master/how-to-make-chrome-extensions/bear
-// dodaj tam zeby sie wyswetiallo mniej wiecej co i jak, nie musi jeszcze dzialac, nie musi byc dodatkowych ustawien
-//    niech bedzie latwo jakos edytowac ten zapis, np. zeby checki na "consider" albo "nie cosider" inner txt, 
-//    zeby to bylo ladnie w polach wypisane
-
-//  ale niech beda z boku klikalne taby (jak w tym co mam do shortcutow)
-
-// merguj to z mainem
-
-// refactor zeby cache sie aktualizowac "storage.onChanged" bo jest taka opcja
-
-
 // alternative shortcuts  --  pamietaj pobrac z maina jak to wyglada i od nowa robic
-
-
-
-// jak rozwiazqac problem mlodego dzbana....
