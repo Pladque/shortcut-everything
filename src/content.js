@@ -66,7 +66,7 @@ async function saveToLocalStorage(name, obj){
   
   // updating cache
   shortcut.set({});
-  const shortCutInfo = prepareDataToCache(obj)
+  const shortCutInfo = await prepareDataToCache(obj)
   await shortcut.set(shortCutInfo);
 
 }
@@ -74,32 +74,32 @@ async function saveToLocalStorage(name, obj){
 ///// STORAGE RELATED / CACHE ////////// STORAGE RELATED / CACHE ////////// STORAGE RELATED / CACHE ////////// STORAGE RELATED / CACHE /////
 
 // prepares data from memory to save inside cache
-function prepareDataToCache(data){
+async function prepareDataToCache(data){
   let shortCutInfo = {}
   for(let i = 0; i < data.data.length; i++){
-    shortCutInfo[data.data[i].shortcut] = () => {
+    shortCutInfo[data.data[i].shortcut] = async () => {
       if(isExtensionEnabled && data.data[i].options.enabled){
         const savedShortCut = data.data[i]
         if(savedShortCut && READ_ACTIVE){
 
-          let elem = getElementWithProperties(savedShortCut, false) 
+          let elem = await getElementWithProperties(savedShortCut, false);
 
           if(elem === null && autoCheckInnerTextChange){
             data.data[i].attributes.others.checkInnerText = ! data.data[i].attributes.others.checkInnerText;
             saveToLocalStorage(getSiteUrlIdentifier(), data)
-            elem = getElementWithProperties(data.data[i], false) 
+            elem = await  getElementWithProperties(data.data[i], false) 
           }
           
           // idk...
           if(elem === null && SEARCH_FULL){
-            elem = getElementWithProperties(data.data[i], true) 
+            elem = await  getElementWithProperties(data.data[i], true) 
           }
           
           if(elem === null){
             alert("ERROR, cannot element")
           }
           else{
-
+            // alert(elem)
             try {
               if(TAGS_TO_SELECT.includes(elem.tagName.toLowerCase())){
                 selectText(elem)
@@ -137,7 +137,7 @@ async function resetStorage(){
 async function updateCache(){
    try {
     const data = await readLocalStorage(getSiteUrlIdentifier())
-    const shortCutInfo = prepareDataToCache(data)
+    const shortCutInfo = await prepareDataToCache(data)
     
     isExtensionEnabled = data.info.enabled;
     await shortcut.set(shortCutInfo);
@@ -309,29 +309,29 @@ function getURL(){
 }
 
 // returns true if the element or one of its parents has the class classname
-async function hasSomeParentTheClass(element, classname) {
+async function hasSomeParentTheClass(element, idname, depth = 0) {
      //
     // If we are here we didn't find the searched class in any parents node
     //
-    if (!element.parentNode) return false;
+    if (!element.parentNode) return -1;
     //
     // If the current node has the class return true, otherwise we will search
     // it in the parent node
     //
-    if(element.getAttribute("class") === classname){
+    if(element.getAttribute("class") === idname){
       // alert(classname);
-      return true;
+      return depth;
     }
     // if (element.className.split(' ').indexOf(classname)>=0) return true;
 
-    return hasSomeParentTheClass(element.parentNode, classname);
+    return hasSomeParentTheClass(element.parentNode, idname, depth+1);
 }
 
 // @DESC: based on properies/attributes (like for example class name) returns matched element from
 //        currently open webpage
 // @INPUT: properties in JSON format as a string
 // @RETURNS: href that matches element with given properties or string "null" if not found   
-function getElementWithProperties(elementProperties, fullSearch){
+async function getElementWithProperties(elementProperties, fullSearch){
 
   let allElements;
 
@@ -399,8 +399,11 @@ function getElementWithProperties(elementProperties, fullSearch){
       if(onlyElementInnerText(allElements[i]) === innerText || checkInnerText===false){
 
         // TESTING, INCREASING DOKLADNOSC 
-        if(elementProperties.attributes.hasParentWithClass){
-          if(hasSomeParentTheClass(allElements[i], elementProperties.attributes.hasParentWithClass)){
+        if(elementProperties.attributes.hasParentWithClass && elementProperties.attributes.hasParentWithClass !== ""){
+
+          const temp = await hasSomeParentTheClass(allElements[i], elementProperties.attributes.hasParentWithClass);
+          console.error(temp)
+          if(temp === 17){
             matchingElements.push({
               "noMatchingFields": noMatchingFields,
               "element": allElements[i],
@@ -435,6 +438,7 @@ function getElementWithProperties(elementProperties, fullSearch){
       wantedIndexFinal = Math.max(0, matchingElements.length+indexOfWantetElement);
     }
 
+    // alert( matchingElements[Math.min(wantedIndexFinal, matchingElements.length-1)].element)
     return  matchingElements[Math.min(wantedIndexFinal, matchingElements.length-1)].element;
   }
 
@@ -486,12 +490,12 @@ async function getButtonInfo(e){
   // IT DOES!!!
   // add it as a field in background, so user will be able ot add this manually (for now)
   // if string is empty, then igorne
-  alert("TODO 489 line in content")
-  button_data.hasParentWithClass = "style-scope ytd-section-list-renderer";
-  alert(1);
-  const temp = await hasSomeParentTheClass(target, "style-scope ytd-section-list-renderer")
+  // alert("TODO 489 line in content")
+  button_data.hasParentWithClass = "style-scope ytd-page-manager";
+  // alert(1);
+  const temp = await hasSomeParentTheClass(target, "style-scope ytd-page-manager")
   alert(temp);
-  alert(2);
+  // alert(2);
 
   return button_data;
 }
