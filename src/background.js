@@ -1,4 +1,6 @@
 const STORAGE_RESERVED_NAMES_PREFIX = "$@$"
+const GENERAL_SETTINGS_STORAGE_NAME = STORAGE_RESERVED_NAMES_PREFIX + "general-settings"
+let darkmodeEnabled;
 
 
 /// STORAGE ////// STORAGE ////// STORAGE ////// STORAGE ////// STORAGE ////// STORAGE ///
@@ -119,6 +121,11 @@ async function onclick_changeskippableAmount(shortcut, amount, site){
   // sendMessageToContent(UPDATE_CACHE)
 }
 
+async function onclick_switchMode(e){
+  darkmodeEnabled = !darkmodeEnabled;
+  await manageDarkMode();
+}
+
 /// ////// ////// ////// ////// ////// ////// ////// ////// ////// ////// ////// ////// ///
 
 async function onOffSite(site){
@@ -175,7 +182,6 @@ async function DeleteShortcut(shortcutToDelete, site){
 
 function createShortcutPanelRow(shortcutData, site){
     var newNode = document.createElement('p');
-    newNode.setAttribute("style", "background-color: aliceblue;")
     newNode.setAttribute("value", shortcutData.shortcut)
     newNode.setAttribute("class", "shortcut")
 
@@ -360,8 +366,74 @@ async function createShortcutsBoard(tabs) {
     });
 }
 
+// Event listener
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('dark-mode switch').addEventListener('change', onclick_switchMode, false)
+
+}, false)
+
+/// darkMode ////// darkMode ////// darkMode ////// darkMode ////// darkMode ////// darkMode ////// darkMode ////// darkMode ///
+
+async function manageDarkMode(){
+   document.getElementById('dark-mode switch').checked = darkmodeEnabled;
+
+   if(darkmodeEnabled){
+    darkMode();
+   }
+   else{
+    lightMode();
+   }
+
+  let darkmodeStatus = undefined;
+  try {
+    darkmodeStatus = await readLocalStorage(GENERAL_SETTINGS_STORAGE_NAME);
+  } catch (error) {
+    
+  }
+
+  let darkmodeStatusJSON =  JSON.parse(darkmodeStatus);
+  darkmodeStatusJSON.darkmode = darkmodeEnabled;
+  
+  darkmodeStatusString = JSON.stringify(darkmodeStatusJSON);
+  await saveToLocalStorage(GENERAL_SETTINGS_STORAGE_NAME,darkmodeStatusString );
+
+}
+
+function darkMode() {
+  var element = document.body;
+  var content = document.getElementById("DarkModetext");
+  element.className = "dark-mode";
+}
+function lightMode() {
+  var element = document.body;
+  var content = document.getElementById("DarkModetext");
+  element.className = "light-mode";
+}
+
+async function getDarkModeSettings(){
+  let darkmodeStatus = undefined;
+  try {
+    darkmodeStatus = await readLocalStorage(GENERAL_SETTINGS_STORAGE_NAME);
+  } catch (error) {
+    
+  }
+
+  if(darkmodeStatus === undefined){
+    let darkmodeNew = "{\"darkmode\": true}";
+    await saveToLocalStorage(GENERAL_SETTINGS_STORAGE_NAME,darkmodeNew );
+    darkmodeStatus = true;
+  }
+
+   return JSON.parse(darkmodeStatus).darkmode;
+}
+
 /// INIT actions ////// INIT actions ////// INIT actions ////// INIT actions ////// INIT actions ////// INIT actions ///
 window.addEventListener('load', async (event) => {
+  darkmodeEnabled = await getDarkModeSettings();
+  await manageDarkMode();
+
+
+
  try {
     var query = { active: true, currentWindow: true };
     chrome.tabs.query(query, createShortcutsBoard);
