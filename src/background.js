@@ -457,3 +457,12 @@ window.addEventListener('load', async (event) => {
   } catch (err) {
   }
 })
+
+
+// przetestuj has-to-be visible ( ale chyba dziala :p )
+// napraw zeby to sie lepiej rpzelaczalo w backgorundzie
+// zrob ladniejszy background, cos bardziej w stylu
+// enabled:   [checkbox]
+// desc:      [desc field]
+
+// zrob jakis inny alert / zadnego alertu gdy znajdzie element ale nie on screen
