@@ -121,6 +121,12 @@ async function onclick_changeskippableAmount(shortcut, amount, site){
   // sendMessageToContent(UPDATE_CACHE)
 }
 
+async function onclick_changehasToBevisible(shortcut,newValue, site){
+  await updateShortcut(shortcut, ["options", "hasToBeVisible"], newValue, site);
+  showMessage("has to be visible " + newValue + "( " + site + " | " + shortcut);
+  // sendMessageToContent(UPDATE_CACHE)
+}
+
 async function onclick_switchMode(e){
   darkmodeEnabled = !darkmodeEnabled;
   await manageDarkMode();
@@ -183,6 +189,7 @@ async function DeleteShortcut(shortcutToDelete, site){
 function createShortcutPanelRow(shortcutData, site){
     var newNode = document.createElement('p');
     newNode.setAttribute("value", shortcutData.shortcut)
+    newNode.setAttribute("style", "border: 3px solid gray;  padding: 5px;")
     newNode.setAttribute("class", "shortcut")
 
     let enableButton = document.createElement("BUTTON");
@@ -246,6 +253,11 @@ function createShortcutPanelRow(shortcutData, site){
     updateSkipableAttribiutesAmountButton.innerText = "update skippable attrs amount"
     updateSkipableAttribiutesAmountButton.setAttribute("class", "update skippable attrs amount");
     updateSkipableAttribiutesAmountButton.setAttribute("value", shortcutData.shortcut);
+
+     let setHasToBeVisibleButton = document.createElement("BUTTON");
+    setHasToBeVisibleButton.innerText = "has to be visible"
+    setHasToBeVisibleButton.setAttribute("class", "has to be visible button");
+    setHasToBeVisibleButton.setAttribute("value", shortcutData.options.hasToBeVisible);
     
     newNode.appendChild(enableButton)
     newNode.appendChild(name)
@@ -257,6 +269,7 @@ function createShortcutPanelRow(shortcutData, site){
     newNode.appendChild(updateInnerTextButton)
     newNode.appendChild(amountOfSkipableAttribiutes)
     newNode.appendChild(updateSkipableAttribiutesAmountButton)
+    newNode.appendChild(setHasToBeVisibleButton)
 
     enableButton.addEventListener('click', function() {
         const currState = enableButton.getAttribute("shortcut-enabled");
@@ -303,6 +316,10 @@ function createShortcutPanelRow(shortcutData, site){
       const amountInput = document.getElementById("max skippable attribiutes "+ shortcutData.shortcut)
       onclick_changeskippableAmount( shortcutData.shortcut, amountInput.value, site)
     }, false);
+    
+    setHasToBeVisibleButton.addEventListener('click', function() {
+     onclick_changehasToBevisible( shortcutData.shortcut,!shortcutData.options.hasToBeVisible,site)
+   }, false);
 
 
     return newNode;
@@ -353,9 +370,32 @@ async function createShortcutsBoard(tabs) {
                 for(let i = 0; i< data.data.length; i++){
                   node.appendChild(createShortcutPanelRow(data.data[i], url))
                   
-                  var rawData = document.createElement('div');
-                  rawData.innerHTML =JSON.stringify( data.data[i]);
-                  node.appendChild(rawData)
+                  var rawDataButton = document.createElement('button');
+                  rawDataButton.innerText = "Show raw data"
+                  rawDataButton.setAttribute("rawData", JSON.stringify( data.data[i]));
+
+                  var rawDataDiv = document.createElement('div');
+                  rawDataDiv.setAttribute("id", url + data.data[i].shortcut)
+                  rawDataDiv.setAttribute("showed", "false")
+                  
+                  rawDataButton.addEventListener('click', function() {
+                    const rawDataDiv =document.getElementById( url + data.data[i].shortcut)
+                    
+                    if (rawDataDiv.getAttribute("showed") === "false"){
+                      rawDataDiv.innerHTML = JSON.stringify( data.data[i]);
+                      rawDataDiv.setAttribute("showed", "true")
+                    }else{
+                      rawDataDiv.innerHTML = "";
+                      rawDataDiv.setAttribute("showed", "false")
+                    }
+
+
+
+
+                  }, false);
+
+                  node.appendChild(rawDataButton);
+                  node.appendChild(rawDataDiv);
 
                 }
                 
@@ -440,3 +480,12 @@ window.addEventListener('load', async (event) => {
   } catch (err) {
   }
 })
+
+
+// napraw zeby "hasToBeVisible" sie lepiej rpzelaczalo w backgorundzie
+
+// zrob ladniejszy background, cos bardziej w stylu
+// enabled:   [checkbox]
+// desc:      [desc field]
+
+// zrob jakis inny alert / zadnego alertu gdy znajdzie element ale nie on screen

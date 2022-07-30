@@ -285,6 +285,16 @@ function matchRequest(request, msg){
 }
 
 
+function isInViewport(element) {
+    const rect = element.getBoundingClientRect();
+    return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+    );
+}
+
 //// GETs //////// GETs //////// GETs //////// GETs //////// GETs //////// GETs //////// GETs ////
 
 function getSiteUrlIdentifier(){
@@ -355,7 +365,7 @@ function getElementWithProperties(elementProperties, fullSearch){
     let skippedAttribiutes = 0;
 
     for(let j = 0; j<attributes_names.length; j++){
-
+        
       if(ATTRIBIUTES_TO_SKIP.includes(attributes_names[j])){
         skippedAttribiutes++;
         continue;
@@ -379,12 +389,23 @@ function getElementWithProperties(elementProperties, fullSearch){
     {
 
       if(onlyElementInnerText(allElements[i]) === innerText || checkInnerText===false){
+        // alert(isInViewport(allElements[i]))
+        if(optionsJSON.hasToBeVisible){
+          if(isInViewport(allElements[i]) === true){
+              matchingElements.push({
+              "noMatchingFields": noMatchingFields,
+              "element": allElements[i],
+            })
+          }
+        }else{
 
+            matchingElements.push({
+            "noMatchingFields": noMatchingFields,
+            "element": allElements[i],
+          })
 
-         matchingElements.push({
-          "noMatchingFields": noMatchingFields,
-          "element": allElements[i],
-        })
+        }
+
 
       }
     }
@@ -405,10 +426,11 @@ function getElementWithProperties(elementProperties, fullSearch){
     }
 
     // alert(wantedIndexFinal);
-    
+
+    // alert(isInViewport(matchingElements[Math.min(wantedIndexFinal, matchingElements.length-1)].element))
     return  matchingElements[Math.min(wantedIndexFinal, matchingElements.length-1)].element;
   }
-
+  
   return null
 }
 
@@ -518,6 +540,7 @@ async function newShortcut(shortcut){
         "enabled": true, 
         "skipableAttribiutes":    Object.keys(JSON.parse(elementPropertiesWithOrginal.targetAttributes)),
         "maxAmonutOfAttribiutesToSkip": 0,
+        "hasToBeVisible": false,
       }
     }
 

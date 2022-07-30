@@ -69,6 +69,8 @@ function showMessage(message){
   document.getElementById('message').innerText = message
 }
 
+
+
 function createTitle(shortcutData){
     var newNode = document.createElement('button');
     newNode.setAttribute("type", "button");
