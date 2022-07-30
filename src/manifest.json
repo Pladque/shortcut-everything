@@ -1,7 +1,7 @@
 {
    
-    "name":"ShortCutEverything",
-    "version": "0.7",
+    "name":"Shortcut everything",
+    "version": "0.7.5",
     "manifest_version": 3,
     "content_scripts": [
       {

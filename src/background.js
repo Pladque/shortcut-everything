@@ -370,9 +370,32 @@ async function createShortcutsBoard(tabs) {
                 for(let i = 0; i< data.data.length; i++){
                   node.appendChild(createShortcutPanelRow(data.data[i], url))
                   
-                  var rawData = document.createElement('div');
-                  rawData.innerHTML =JSON.stringify( data.data[i]);
-                  node.appendChild(rawData)
+                  var rawDataButton = document.createElement('button');
+                  rawDataButton.innerText = "Show raw data"
+                  rawDataButton.setAttribute("rawData", JSON.stringify( data.data[i]));
+
+                  var rawDataDiv = document.createElement('div');
+                  rawDataDiv.setAttribute("id", url + data.data[i].shortcut)
+                  rawDataDiv.setAttribute("showed", "false")
+                  
+                  rawDataButton.addEventListener('click', function() {
+                    const rawDataDiv =document.getElementById( url + data.data[i].shortcut)
+                    
+                    if (rawDataDiv.getAttribute("showed") === "false"){
+                      rawDataDiv.innerHTML = JSON.stringify( data.data[i]);
+                      rawDataDiv.setAttribute("showed", "true")
+                    }else{
+                      rawDataDiv.innerHTML = "";
+                      rawDataDiv.setAttribute("showed", "false")
+                    }
+
+
+
+
+                  }, false);
+
+                  node.appendChild(rawDataButton);
+                  node.appendChild(rawDataDiv);
 
                 }
                 
