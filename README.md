@@ -70,9 +70,13 @@ Deletes chosen shortcut.
 ## Update shortcut button
 allows to change key sequence of existing shortcut. If sucha a sequence already exists, will be overwritten.
 
+## Has to be visible button (beta)
+In process of searching for matching element, consider only elements, that are currently on the screen. Still needs some fixes, doesnt work perfect. 
 
 ## Reset storage
 Deletes all shortcuts from every website.
 
 ## Show Shortcuts Raw
 Shows stored data for current website.
+
+
