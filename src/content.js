@@ -37,7 +37,7 @@ const readLocalStorage = async (key) => {
   };
 
 chrome.storage.onChanged.addListener(function(changes, namespace) {
-     // alert("change recived! 1");    // when changing in popup
+     // cAlert("change recived! 1");    // when changing in popup
     updateCache();
 });
 
@@ -49,7 +49,7 @@ const clearStorage = async(msg) => {
         console.error(error);
     }
     if(msg!== null)
-      alert(msg)
+      cAlert(msg)
   });
 }
 
@@ -96,7 +96,11 @@ function prepareDataToCache(data){
           }
           
           if(elem === null){
-            alert("ERROR, cannot element")
+            if(data.data[i].options.hasToBeVisible){
+              cAlert("ERROR, cannot element on current screen (perhaps element is not visible)")
+            }else{
+              cAlert("ERROR, cannot element")
+            }
           }
           else{
 
@@ -108,8 +112,8 @@ function prepareDataToCache(data){
               }
 
             } catch (error) {
-              alert("Ups, something went wrong")
-              alert("Try add " + elem.tagName + " to NOT_WORKING_TAGS in config file (remember to delete this shortcut and add again)")
+              cAlert("Ups, something went wrong")
+              cAlert("Try add " + elem.tagName + " to NOT_WORKING_TAGS in config file (remember to delete this shortcut and add again)")
             }
 
           }
@@ -232,6 +236,11 @@ function parseURL(url){
     const parsed = partlyParsed[1].split('/')[0]  
 
     return parsed
+}
+
+// custom alert, will be done better in the future
+function cAlert(msg){
+  alert(msg);
 }
 
 function getJSONfieldNames(jsonObject){
@@ -389,7 +398,7 @@ function getElementWithProperties(elementProperties, fullSearch){
     {
 
       if(onlyElementInnerText(allElements[i]) === innerText || checkInnerText===false){
-        // alert(isInViewport(allElements[i]))
+        // cAlert(isInViewport(allElements[i]))
         if(optionsJSON.hasToBeVisible){
           if(isInViewport(allElements[i]) === true){
               matchingElements.push({
@@ -420,14 +429,14 @@ function getElementWithProperties(elementProperties, fullSearch){
   if(matchingElements.length >=1){
     let wantedIndexFinal = indexOfWantetElement;
 
-    // alert(indexOfWantetElement)
+    // cAlert(indexOfWantetElement)
     if(indexOfWantetElement < 0){
       wantedIndexFinal = Math.max(0, matchingElements.length+indexOfWantetElement);
     }
 
-    // alert(wantedIndexFinal);
+    // cAlert(wantedIndexFinal);
 
-    // alert(isInViewport(matchingElements[Math.min(wantedIndexFinal, matchingElements.length-1)].element))
+    // cAlert(isInViewport(matchingElements[Math.min(wantedIndexFinal, matchingElements.length-1)].element))
     return  matchingElements[Math.min(wantedIndexFinal, matchingElements.length-1)].element;
   }
   
@@ -465,7 +474,7 @@ async function getButtonInfo(e){
       target = target.parentElement;
     }
   } catch (error) {
-    alert("Something went wrong! There are no clickable tags nearby!");
+    cAlert("Something went wrong! There are no clickable tags nearby!");
   }
 
   let button_data = {};
@@ -495,7 +504,7 @@ async function onOffLocal(){
     console.log(e);
   });;
 
-  alert("extension for this site is enabled: " + siteData.info.enabled)
+  cAlert("extension for this site is enabled: " + siteData.info.enabled)
 
 }
 
@@ -602,7 +611,7 @@ async function improveShortcut(shortcut){
     }
 
     if(presentShortcuts === null || presentShortcuts === undefined){
-      alert("Something went wrong coudnt find any shortcuts! (" + shortcut + ")")
+      cAlert("Something went wrong coudnt find any shortcuts! (" + shortcut + ")")
     }else{
       shortcutrsArr = presentShortcuts["data"]
       
@@ -610,7 +619,7 @@ async function improveShortcut(shortcut){
       
       if(indexOfShortcut === -1){  // coudn find such a shortcut
 
-        alert("Something went wrong coudnt find shortcut: " + globalShortcut)
+        cAlert("Something went wrong coudnt find shortcut: " + globalShortcut)
 
       }else{  // improve shortcut
 
@@ -659,7 +668,7 @@ async function DeleteShortcut(shortcutToDelete){
   } catch (error) {  }
 
   if(presentShortcuts === null){
-    alert("not found any shortcuts for this site: " + site)
+    cAlert("not found any shortcuts for this site: " + site)
     return
   }
   
@@ -670,7 +679,7 @@ async function DeleteShortcut(shortcutToDelete){
   let shortcutInfo = {}
   if(indexOfShortcut === -1){  // not found shortcut
 
-    alert("not found shortcut: " +  shortcutToDelete + ". Nothing deleted")
+    cAlert("not found shortcut: " +  shortcutToDelete + ". Nothing deleted")
     return
 
   }else{  // delete shortcut
@@ -681,17 +690,17 @@ async function DeleteShortcut(shortcutToDelete){
 
   await saveToLocalStorage(site, {"data": shortcutrsArr, info: presentShortcuts["info"]}).catch(e => {console.log(e);});
   
-  alert("deleted " + shortcutToDelete +" "+ shortcutInfo["desc"])
+  cAlert("deleted " + shortcutToDelete +" "+ shortcutInfo["desc"])
 
 }
 
 async function enableDisableShortcut(shortcut, site = null){
-  alert(site)
+  // cAlert(site)
   
   if(site === null){
     site = getSiteUrlIdentifier()
   }
-  alert(site)
+  // cAlert(site)
 
   try {
     presentShortcuts = await readLocalStorage(site).catch(e => {
@@ -722,7 +731,7 @@ chrome.runtime.onMessage.addListener(async function(request){
 
   if(matchRequest(request, GET_SHORTCUTS) ){
     const data = await readLocalStorage(getSiteUrlIdentifier())
-    alert(JSON.stringify(data))
+    cAlert(JSON.stringify(data))
     return
   }
   else if(matchRequest(request, ON_OFF_LOCAL_MSG) ){
@@ -767,7 +776,7 @@ chrome.runtime.onMessage.addListener(async function(request){
 
   }
   else{
-    alert("UNKNOWN REQUEST: " + request)
+    cAlert("UNKNOWN REQUEST: " + request)
   }
 })
 

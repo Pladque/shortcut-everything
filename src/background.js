@@ -123,7 +123,7 @@ async function onclick_changeskippableAmount(shortcut, amount, site){
 
 async function onclick_changehasToBevisible(shortcut,newValue, site){
   await updateShortcut(shortcut, ["options", "hasToBeVisible"], newValue, site);
-  showMessage("has to be visible " + newValue + "( " + site + " | " + shortcut);
+  showMessage("has to be visible had been set to " + newValue + "( " + site + " | " + shortcut);
   // sendMessageToContent(UPDATE_CACHE)
 }
 
@@ -186,10 +186,22 @@ async function DeleteShortcut(shortcutToDelete, site){
 
 }
 
+function createOptionHTML(title, field){
+  var newNode = document.createElement('div');
+  newNode.setAttribute("style", "width:100%;");
+
+  var titleNode = document.createElement('div');
+  titleNode.innerText = title;
+
+  newNode.appendChild(titleNode);
+  newNode.appendChild(field);
+
+}
+
 function createShortcutPanelRow(shortcutData, site){
     var newNode = document.createElement('p');
     newNode.setAttribute("value", shortcutData.shortcut)
-    newNode.setAttribute("style", "border: 3px solid gray;  padding: 5px;")
+    newNode.setAttribute("style", "border: 3px solid gray;  padding: 5px; ")
     newNode.setAttribute("class", "shortcut")
 
     let enableButton = document.createElement("BUTTON");
@@ -318,7 +330,17 @@ function createShortcutPanelRow(shortcutData, site){
     }, false);
     
     setHasToBeVisibleButton.addEventListener('click', function() {
-     onclick_changehasToBevisible( shortcutData.shortcut,!shortcutData.options.hasToBeVisible,site)
+
+      if(setHasToBeVisibleButton.getAttribute("value") === "true"){
+        setHasToBeVisibleButton.innerText = "has to be visible";
+        setHasToBeVisibleButton.setAttribute("value", "false"); 
+        onclick_changehasToBevisible( shortcutData.shortcut,false,site)
+      }else{
+        setHasToBeVisibleButton.innerText = "does not have to be visible";
+        setHasToBeVisibleButton.setAttribute("value", "true"); 
+        onclick_changehasToBevisible( shortcutData.shortcut,true,site)
+      }
+
    }, false);
 
 
@@ -482,9 +504,7 @@ window.addEventListener('load', async (event) => {
 })
 
 
-// napraw zeby "hasToBeVisible" sie lepiej rpzelaczalo w backgorundzie
-
-// zrob ladniejszy background, cos bardziej w stylu
+// zrob ladniejszy background, cos bardziej w stylu ==== dokoncz funckje createOptionHTML(), niech do field to bd wtylko wlasciwosci i na ich podtawie bd tworzyc NODA
 // enabled:   [checkbox]
 // desc:      [desc field]
 
