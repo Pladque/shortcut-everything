@@ -19,6 +19,7 @@
 					"shortcut: (string),
 					"options": { 
 						enabled: (bool),
+						hasToBeVisible: (bool),
 						elementIndex: (int),
 						
 						}
@@ -60,10 +61,14 @@
 				after ".toLowerCase()" function. For example "shift-alt-l"
 "options" -- place to add options for inditivual shortcut, like "enabled", "delay" etc (non of them is currenlty in use)
 
+"hasToBeVisible"	-- if true, only elements that are currently on the screen will be considered, if false every element	
+						in html will be considered
+
 "elementIndex" -- 	if there are N similar elements, and you want Kth element to be shortcuted, then you should change elementIndex to k to make it work
 
 "info" -- iformation that applites for all shortcuts in site
 	"enabled" -- determiens wherther extension should run on this page
+
 
 
 
