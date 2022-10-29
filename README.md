@@ -1,4 +1,5 @@
 # shortcut-everything
+### Check [New version of extension!](https://github.com/Pladque/Shortcut-Everything2.0)
 ### Current version: v0.7.5
 A chrome extension that allows you to create shortcut on websites and improve your workflow!
 
